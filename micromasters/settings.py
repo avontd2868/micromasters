@@ -138,6 +138,7 @@ INSTALLED_APPS = (
     'courses',
     'dashboard',
     'ecommerce',
+    'exams',
     'financialaid',
     'grades',
     'mail',

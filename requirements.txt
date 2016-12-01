@@ -37,6 +37,7 @@ newrelic==2.72.1.53
 oauthlib==2.0.0           # via python-social-auth, requests-oauthlib
 pillow==3.4.2
 psycopg2==2.6
+pycountry==16.11.27.1
 pyjwt==1.4.2              # via python-social-auth
 python-dateutil==2.5.3
 python-social-auth==0.2.21

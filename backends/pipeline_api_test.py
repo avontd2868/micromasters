@@ -41,6 +41,7 @@ class EdxPipelineApiTest(ESTestCase):
                     'work_history',
                     'education',
                     'updated_on',
+                    'exam_profile',
             ):
                 continue
             if key == 'account_privacy':
