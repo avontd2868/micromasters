@@ -159,9 +159,8 @@ class CachedEnrollment(CachedEdxInfoModel):
             QuerySet: a queryset of all the data fields for the provided user and program
         """
         qset = cls.active_qset_program(user, program)
-        data = qset.values_list('data', flat=True).all()
-        names = qset.values_list('course_run__title', flat=True).all()
-        return [{ **d, **{ 'title': n }} for (d, n) in zip(data, names)]
+        values = qset.values_list('data', 'course_run__title').all()
+        return [{ **data, **{ 'title': title }} for (data, title) in values]
 
 
 class CachedCertificate(CachedEdxInfoModel):
