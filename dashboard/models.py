@@ -78,6 +78,7 @@ class CachedEdxInfoModel(Model):
         Returns:
             QuerySet: a queryset of all the data fields for the provided user and program
         """
+        import ipdb; ipdb.set_trace()
         return cls.active_qset_program(user, program).values_list('data', flat=True).all()
 
     @classmethod
