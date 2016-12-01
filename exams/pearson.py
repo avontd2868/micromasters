@@ -64,7 +64,7 @@ def profile_to_ccd_row(profile):
     return row
 
 
-def write_profile_ccd(profiles, tsv_file):
+def write_profiles_ccd(profiles, tsv_file):
     """
     Writes profiles to a tsv file using Pearson's CCD format
     """

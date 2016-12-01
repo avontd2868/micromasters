@@ -13,7 +13,7 @@ from factory.django import mute_signals
 from exams.pearson import (
     CCD_FIELD_NAMES,
     LAST_UPDATE_FORMAT,
-    write_profile_ccd,
+    write_profiles_ccd,
     profile_to_ccd_row,
 )
 from profiles.factories import ProfileFactory
@@ -52,13 +52,13 @@ class PearsonTest(TestCase):
 
         assert 'Address3' not in row
 
-    def test_write_profile_ccd_no_profiles(self):  # pylint: disable=no-self-use
+    def test_write_profiles_ccd_no_profiles(self):  # pylint: disable=no-self-use
         """
-        Tests write_profile_ccd against an empty set of profiles
+        Tests write_profiles_ccd against an empty set of profiles
         """
         file = io.StringIO()
 
-        write_profile_ccd([], file)
+        write_profiles_ccd([], file)
 
         lines = file.getvalue().splitlines()
 
@@ -66,9 +66,9 @@ class PearsonTest(TestCase):
             '\t'.join(CCD_FIELD_NAMES),
         ]
 
-    def test_write_profile_ccd(self):  # pylint: disable=no-self-use
+    def test_write_profiles_ccd(self):  # pylint: disable=no-self-use
         """
-        Tests write_profile_ccd against an empty set of profiles
+        Tests write_profiles_ccd against an empty set of profiles
         """
         file = io.StringIO()
 
@@ -78,7 +78,7 @@ class PearsonTest(TestCase):
             profiles.extend(ProfileFactory.create_batch(5, address3='Room B345'))
             profiles.extend(ProfileFactory.create_batch(5, address2=None))
 
-        write_profile_ccd(profiles, file)
+        write_profiles_ccd(profiles, file)
 
         lines = file.getvalue().splitlines()
 
