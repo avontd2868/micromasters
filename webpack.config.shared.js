@@ -8,9 +8,10 @@ let babelQuerySettings = {
 module.exports = {
   entry: {
     'dashboard': ['babel-polyfill', './static/js/entry/dashboard'],
-    'financial_aid': './static/js/financial_aid/functions',
+    'financial_aid': ['babel-polyfill', './static/js/financial_aid/functions'],
     'public': ['babel-polyfill', './static/js/entry/public'],
     'sentry_client': './static/js/entry/sentry_client.js',
+    'social': './static/js/entry/social',
     'style': './static/js/entry/style',
     'style_public': './static/js/entry/style_public',
     'zendesk_widget': './static/js/entry/zendesk_widget.js',
