@@ -170,6 +170,28 @@ export default class LearnerSearch extends SearchkitComponent {
           </FilterVisibilityToggle>
           <FilterVisibilityToggle
             {...this.props}
+            filterName="course-payment"
+          >
+            <RefinementListFilter
+              field={"program.enrollments.title"}
+              fieldOptions={{type: 'nested', options: { path: 'program.enrollments' } }}
+              title="Course"
+              id="course"
+            />
+          </FilterVisibilityToggle>
+          <FilterVisibilityToggle
+            {...this.props}
+            filterName="course-status"
+          >
+            <RefinementListFilter
+              field={"program.enrollments.mode"}
+              fieldOptions={{type: 'nested', options: { path: 'program.enrollments' } }}
+              title="Course"
+              id="course"
+            />
+          </FilterVisibilityToggle>
+          <FilterVisibilityToggle
+            {...this.props}
             filterName="grade-average"
           >
             <RangeFilter

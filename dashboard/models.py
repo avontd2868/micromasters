@@ -78,7 +78,6 @@ class CachedEdxInfoModel(Model):
         Returns:
             QuerySet: a queryset of all the data fields for the provided user and program
         """
-        import ipdb; ipdb.set_trace()
         return cls.active_qset_program(user, program).values_list('data', flat=True).all()
 
     @classmethod
@@ -146,6 +145,24 @@ class CachedEnrollment(CachedEdxInfoModel):
             [enrollment.data for enrollment in cls.active_qset_all(user)]
         )
 
+    @classmethod
+    def active_data(cls, user, program):
+        """
+        Returns a list containing the 'data' property of every active record associated
+        with a User/Program pair
+
+        Args:
+            user (User): an User object
+            program (courses.models.Program): a program
+
+        Returns:
+            QuerySet: a queryset of all the data fields for the provided user and program
+        """
+        qset = cls.active_qset_program(user, program)
+        data = qset.values_list('data', flat=True).all()
+        names = qset.values_list('course_run__title', flat=True).all()
+        return [{ **d, **{ 'title': n }} for (d, n) in zip(data, names)]
+
 
 class CachedCertificate(CachedEdxInfoModel):
     """
@@ -165,6 +182,7 @@ class CachedCertificate(CachedEdxInfoModel):
         return Certificates([
             Certificate(certificate.data) for certificate in cls.active_qset_all(user)
         ])
+
 
 
 class CachedCurrentGrade(CachedEdxInfoModel):
