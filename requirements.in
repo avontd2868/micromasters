@@ -20,6 +20,7 @@ jsonfield==1.0.3
 newrelic
 psycopg2==2.6
 pycountry==16.11.27.1
+pysftp==0.2.9
 python-dateutil
 python-social-auth==0.2.21
 raven

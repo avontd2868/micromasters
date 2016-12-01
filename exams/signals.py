@@ -1,0 +1,14 @@
+
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+from profiles.models import Profile
+
+
+@receiver(post_save, Profile, dispatch_uid='update_exam_profile')
+def update_exam_profile(send, instance, **kwargs):
+    """
+    Signal handler to trigger a sync of the profile if an ExamProfile record exists for it.
+    """
+    instance.exam_profile.update(status=ExamProfile.PROFILE_PENDING)
+
