@@ -2,11 +2,11 @@
 Tests for exam signals
 """
 
-from mock import patch
 from unittest import TestCase
+from unittest.mock import patch
 
 from exams.factories import ExamProfileFactory
-from.profiles.factories import ProfileFactory
+from profiles.factories import ProfileFactory
 
 class ExamSignalsTest(TestCase):
     @patch('exams.signals.update_exam_profile.send')
