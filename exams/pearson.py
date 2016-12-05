@@ -53,7 +53,7 @@ def profile_to_ccd_row(profile):
         'Country': country.alpha_3,
         'Phone': profile.phone_number,
         'PhoneCountryCode': profile.phone_country_code,
-        'LastUpdate': profile.date_updated.strftime(LAST_UPDATE_FORMAT),
+        'LastUpdate': profile.updated_on.strftime(LAST_UPDATE_FORMAT),
     }
 
     if profile.address2:
