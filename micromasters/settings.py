@@ -559,4 +559,4 @@ if DEBUG:
 EXAMS_SFTP_HOST = get_var('EXAMS_SFTP_HOST', 'localhost')
 EXAMS_SFTP_USERNAME = get_var('EXAMS_SFTP_USERNAME', '')
 EXAMS_SFTP_PASSWORD = get_var('EXAMS_SFTP_PASSWORD', '')
-EXAMS_SFTP_PUT_DIR= get_var('EXAMS_SFTP_PUT_DIR', '/results/topvue')
+EXAMS_SFTP_PUT_DIR = get_var('EXAMS_SFTP_PUT_DIR', '/results/topvue')

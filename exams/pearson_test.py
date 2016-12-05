@@ -30,7 +30,7 @@ class PearsonTest(TestCase):
         """
         with mute_signals(post_save):
             profile = ProfileFactory.create()
-        profile.date_updated = datetime.datetime(2014, 12, 17, 15, 45, 0, tzinfo=pytz.utc)
+        profile.updated_on = datetime.datetime(2014, 12, 17, 15, 45, 0, tzinfo=pytz.utc)
 
         row = profile_to_ccd_row(profile)
         country = pycountry.countries.get(alpha_2=profile.country)
@@ -103,7 +103,7 @@ class PearsonTest(TestCase):
                 country.alpha_3,
                 profile.phone_number,
                 profile.phone_country_code,
-                profile.date_updated.strftime(LAST_UPDATE_FORMAT),
+                profile.updated_on.strftime(LAST_UPDATE_FORMAT),
             ])))
 
             for cell in row.split('\t'):
