@@ -10,6 +10,7 @@ from django.db.models.signals import post_save
 from django.test import TestCase
 from factory.django import mute_signals
 
+from exams.exceptions import InvalidProfileDataException
 from exams.pearson import (
     CCD_FIELD_NAMES,
     LAST_UPDATE_FORMAT,
@@ -51,6 +52,16 @@ class PearsonTest(TestCase):
         assert row['LastUpdate'] == '2014-12-17 15:45:00'
 
         assert 'Address3' not in row
+
+    def test_profile_to_ccd_row_invalid_country(self):  # pylint: disable=no-self-use
+        """
+        A profile with an invalid country code should raise an InvalidProfileDataException
+        """
+        with mute_signals(post_save):
+            profile = ProfileFactory.create()
+        profile.country = 'XXXX'
+        with self.assertRaises(InvalidProfileDataException):
+            profile_to_ccd_row(profile)
 
     def test_write_profiles_ccd_no_profiles(self):  # pylint: disable=no-self-use
         """

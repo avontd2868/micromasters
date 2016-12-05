@@ -14,3 +14,17 @@ class UserFactory(DjangoModelFactory):
 
     class Meta:  # pylint: disable=missing-docstring,no-init,too-few-public-methods,old-style-class
         model = User
+
+
+class UserWithProfileFactory(UserFactory):
+    """Factory for Users with Profiles"""
+    def create(cls, **kwargs):
+        """Create a user with a profile"""
+        from profiles.factories import ProfileFactory
+
+        user = super().create(**kwargs)
+
+        ProfileFactory.create(user=user)
+
+        return user
+
