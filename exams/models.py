@@ -4,8 +4,6 @@ Models for exams
 from django.db import models
 from django.db.models import Model
 
-from profiles.models import Profile
-
 
 class ExamProfile(Model):
     """
@@ -24,7 +22,10 @@ class ExamProfile(Model):
         (PROFILE_SUCCESS, 'Sync Suceeded'),
     )
 
-    profile = models.OneToOneField(Profile, related_name='exam_profile')
+    profile = models.OneToOneField(
+        'profiles.models.Profile',
+        related_name='exam_profile'
+    )
     status = models.CharField(
         max_length=3,
         null=False,

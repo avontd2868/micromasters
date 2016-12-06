@@ -43,8 +43,8 @@ def profile_to_ccd_row(profile):
         raise InvalidProfileDataException()
     row = {
         'ClientCandidateId': profile.student_id,
-        'FirstName': profile.first_name,
-        'LastName': profile.last_name,
+        'FirstName': profile.romanized_first_name,
+        'LastName': profile.romanized_last_name,
         'Email': profile.user.email,
         'Address1': profile.address1,
         'City': profile.city,
