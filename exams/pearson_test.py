@@ -38,8 +38,8 @@ class PearsonTest(TestCase):
 
         assert isinstance(row, dict)
         assert row['ClientCandidateId'] == profile.student_id
-        assert row['FirstName'] == profile.first_name
-        assert row['LastName'] == profile.last_name
+        assert row['FirstName'] == profile.romanized_first_name
+        assert row['LastName'] == profile.romanized_last_name
         assert row['Email'] == profile.user.email
         assert row['Address1'] == profile.address1
         assert row['Address2'] == profile.address2
@@ -102,8 +102,8 @@ class PearsonTest(TestCase):
             country = pycountry.countries.get(alpha_2=profile.country)
             assert row == ('\t'.join(map(str, [
                 profile.student_id,
-                profile.first_name,
-                profile.last_name,
+                profile.romanized_first_name,
+                profile.romanized_last_name,
                 profile.user.email,
                 profile.address1,
                 profile.address2 or '',
