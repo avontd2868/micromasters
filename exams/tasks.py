@@ -4,13 +4,15 @@ Tasks for exams
 from datetime import datetime
 
 import os
-import pysftp
 import pytz
+import tempfile
 
-from django.conf import settings
 
 from exams.models import ExamProfile
-from exams.pearson import write_profiles_ccd
+from exams.pearson import (
+    write_profiles_ccd,
+    upload_tsv,
+)
 from micromasters.celery import async
 
 
@@ -20,24 +22,21 @@ def export_exam_profiles():
     Sync any outstanding profiles
     """
     exam_profiles = ExamProfile.objects.filter(status=ExamProfile.PROFILE_PENDING)
-    now = datetime.now(pytz.utc)
-    file_path = now.strftime('/tmp/ccd-%Y-%m-%d-%H.dat')
+    file_prefix = datetime.now(pytz.utc).strftime('ccd-%Y%m%d%H_')
 
     # write the file out locally
-    with open(file_path, 'w') as tsv:
+    # this will be written out to a file like: /tmp/ccd-20160405_kjfiamdf.dat
+    with tempfile.NamedTemporaryFile(
+        prefix=file_prefix,
+        suffix='.dat',
+    ) as tsv:
         write_profiles_ccd(exam_profiles, tsv)
 
-    # upload to SFTP server
-    with pysftp.Connection(
-        settings.EXAMS_SFTP_HOST,
-        settings.EXAMS_SFTP_USERNAME,
-        settings.EXAMS_SFTP_PASSWORD
-    ) as sftp:
-        with sftp.cd(settings.EXAMS_SFTP_PUT_DIR):
-            sftp.put(file_path)
+        # flush data to disk before upload
+        tsv.flush()
+
+        # upload to SFTP server
+        upload_tsv(tsv.name)
 
     # update records to reflect the successful upload
     exam_profiles.update(status=ExamProfile.PROFILE_IN_PROGRESS)
-
-    # cleanup
-    os.remove(file_path)
