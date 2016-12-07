@@ -3,6 +3,9 @@ Pearson specific exam code
 """
 import csv
 import pycountry
+import pysftp
+
+from django.conf import settings
 
 from exams.exceptions import InvalidProfileDataException
 
@@ -77,3 +80,16 @@ def write_profiles_ccd(profiles, tsv_file):
 
     writer.writeheader()
     writer.writerows([profile_to_ccd_row(profile) for profile in profiles])
+
+
+def upload_tsv(file_path):
+    """
+    Upload the given TSV files to the remote
+    """
+    with pysftp.Connection(
+        settings.EXAMS_SFTP_HOST,
+        settings.EXAMS_SFTP_USERNAME,
+        settings.EXAMS_SFTP_PASSWORD
+    ) as sftp:
+        with sftp.cd(settings.EXAMS_SFTP_PUT_DIR):
+            sftp.put(file_path)
