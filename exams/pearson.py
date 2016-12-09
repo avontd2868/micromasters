@@ -2,10 +2,11 @@
 Pearson specific exam code
 """
 import csv
-import pycountry
-import pysftp
+import logging
 
 from django.conf import settings
+import pycountry
+import pysftp
 
 from exams.exceptions import InvalidProfileDataException
 
@@ -33,6 +34,9 @@ CCD_FIELD_NAMES = [
 ]
 
 LAST_UPDATE_FORMAT = "%Y-%m-%d %H:%M:%S"
+
+
+log = logging.getLogger(__name__)
 
 
 def profile_to_ccd_row(profile):
@@ -79,7 +83,16 @@ def write_profiles_ccd(profiles, tsv_file):
     )
 
     writer.writeheader()
-    writer.writerows([profile_to_ccd_row(profile) for profile in profiles])
+
+    for profile in profiles:
+        try:
+            writer.writerow(profile_to_ccd_row(profile))
+        except InvalidProfileDataException:
+            log.exception(
+                "Invalid country %s for user %s",
+                profile.country,
+                profile.user.id
+            )
 
 
 def upload_tsv(file_path):

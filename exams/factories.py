@@ -18,5 +18,5 @@ class ExamProfileFactory(DjangoModelFactory):
     )
     profile = SubFactory(ProfileFactory)
 
-    class Meta:
+    class Meta:  # pylint: disable=missing-docstring
         model = ExamProfile
