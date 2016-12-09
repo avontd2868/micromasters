@@ -12,6 +12,7 @@ from exams.pearson import (
     upload_tsv,
 )
 from micromasters.celery import async
+from profiles.models import Profile
 
 
 @async.task
