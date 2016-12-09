@@ -1,14 +1,17 @@
 """
 Tests for exams.pearson module
 """
+from unittest.mock import patch
+
 import datetime
 import io
-import pycountry
-import pytz
 
 from django.db.models.signals import post_save
 from django.test import TestCase
 from factory.django import mute_signals
+
+import pycountry
+import pytz
 
 from exams.exceptions import InvalidProfileDataException
 from exams.pearson import (
@@ -79,7 +82,7 @@ class PearsonTest(TestCase):
 
     def test_write_profiles_ccd(self):  # pylint: disable=no-self-use
         """
-        Tests write_profiles_ccd against an empty set of profiles
+        Tests write_profiles_ccd against a set of profiles
         """
         file = io.StringIO()
 
@@ -119,3 +122,49 @@ class PearsonTest(TestCase):
 
             for cell in row.split('\t'):
                 assert cell != 'None'
+
+    def test_write_profiles_ccd_skips_invalid_state(self):  # pylint: disable=no-self-use
+        """
+        Tests write_profiles_ccd against a profiel with invalid state
+        """
+        file = io.StringIO()
+
+        with mute_signals(post_save):
+            profiles = [ProfileFactory.create(country='00')]
+
+        write_profiles_ccd(profiles, file)
+
+        lines = file.getvalue().splitlines()
+
+        _, rows = lines[0], lines[1:]
+
+        assert len(rows) == 0
+
+    def test_upload_tsv(self):  # pylint: disable=no-self-use
+        """
+        Tests that upload uses the correct settings values
+        """
+        EXAMS_SFTP_HOST = 'l0calh0st',
+        EXAMS_SFTP_USERNAME = 'username',
+        EXAMS_SFTP_PASSWORD = 'password'
+        EXAMS_SFTP_PUT_DIR = '/tmp'
+        FILENAME = 'FILENAME'
+
+        with self.settings(
+            EXAMS_SFTP_HOST=EXAMS_SFTP_HOST,
+            EXAMS_SFTP_USERNAME=EXAMS_SFTP_USERNAME,
+            EXAMS_SFTP_PASSWORD=EXAMS_SFTP_PASSWORD,
+            EXAMS_SFTP_PUT_DIR=EXAMS_SFTP_PUT_DIR
+        ), patch('pysftp.Connection') as connection_mock:
+            from exams.pearson import upload_tsv
+
+            upload_tsv(FILENAME)
+            connection_mock.assert_called_with(
+                EXAMS_SFTP_HOST,
+                EXAMS_SFTP_USERNAME,
+                EXAMS_SFTP_PASSWORD,
+            )
+
+            ftp_mock = connection_mock.return_value.__enter__.return_value
+            ftp_mock.cd.assert_called_with(EXAMS_SFTP_PUT_DIR)
+            ftp_mock.put.assert_called_with(FILENAME)
