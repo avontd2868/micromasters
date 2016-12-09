@@ -4,7 +4,7 @@ AppConfig
 from django.apps import AppConfig
 
 
-class SearchConfig(AppConfig):
+class ExamsConfig(AppConfig):
     """
     App config for this app
     """

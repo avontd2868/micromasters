@@ -13,5 +13,4 @@ def update_exam_profile(sender, instance, **kwargs):  # pylint: disable=unused-a
     """
     Signal handler to trigger a sync of the profile if an ExamProfile record exists for it.
     """
-    raise Exception("HERE")
     ExamProfile.objects.filter(profile_id=instance.id).update(status=ExamProfile.PROFILE_PENDING)
