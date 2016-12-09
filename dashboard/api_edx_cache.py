@@ -3,6 +3,8 @@ APIs that deal with the edx cached data
 """
 import datetime
 import logging
+from collections import namedtuple
+
 import pytz
 from django.db import transaction
 
@@ -12,6 +14,9 @@ from profiles.api import get_social_username
 from search import tasks
 
 log = logging.getLogger(__name__)
+
+UserCachedRunData = namedtuple(
+    'UserCachedRunData', ['edx_course_key', 'enrollment', 'certificate', 'current_grade'])
 
 
 class CachedEdxUserData:
@@ -31,6 +36,23 @@ class CachedEdxUserData:
         self.enrollments = models.CachedEnrollment.get_edx_data(self.user, program=self.program)
         self.certificates = models.CachedCertificate.get_edx_data(self.user, program=self.program)
         self.current_grades = models.CachedCurrentGrade.get_edx_data(self.user, program=self.program)
+
+    def get_run_data(self, course_id):
+        """
+        Returns cached data for the user in a specific course run
+
+        Args:
+            course_id (str): a string representing the edx course key for a course run
+
+        Returns:
+            namedtuple: a object containing the cached data for the user in the course run
+        """
+        return UserCachedRunData(
+            edx_course_key=course_id,
+            enrollment=self.enrollments.get_enrollment_for_course(course_id),
+            certificate=self.certificates.get_cert(course_id),
+            current_grade=self.current_grades.get_current_grade(course_id),
+        )
 
 
 class CachedEdxDataApi:

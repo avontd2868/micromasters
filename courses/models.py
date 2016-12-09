@@ -160,6 +160,7 @@ class CourseRun(models.Model):
     enrollment_end = models.DateTimeField(blank=True, null=True, db_index=True)
     end_date = models.DateTimeField(blank=True, null=True, db_index=True)
     upgrade_deadline = models.DateTimeField(blank=True, null=True, db_index=True)
+    freeze_grade_date = models.DateTimeField(blank=True, null=True, db_index=True)
     fuzzy_start_date = models.CharField(
         max_length=255, blank=True, null=True,
         help_text="If you don't know when your course will run exactly, "
@@ -250,3 +251,12 @@ class CourseRun(models.Model):
         Checks if the course is not expired
         """
         return not self.is_past and self.is_upgradable and self.is_not_beyond_enrollment
+
+    @property
+    def can_freeze_grades(self):
+        """
+        Checks if the final grades can be frozen.
+        """
+        if self.freeze_grade_date is None:
+            raise ImproperlyConfigured('Missing freeze_grade_date')
+        return datetime.now(pytz.utc) > self.freeze_grade_date
