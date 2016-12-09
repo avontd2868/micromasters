@@ -99,10 +99,14 @@ def upload_tsv(file_path):
     """
     Upload the given TSV files to the remote
     """
+    cnopts = pysftp.CnOpts()
+    cnopts.hostkeys = None  # ignore knownhosts
     with pysftp.Connection(
-        settings.EXAMS_SFTP_HOST,
-        settings.EXAMS_SFTP_USERNAME,
-        settings.EXAMS_SFTP_PASSWORD
+        host=str(settings.EXAMS_SFTP_HOST),
+        port=int(settings.EXAMS_SFTP_PORT),
+        username=str(settings.EXAMS_SFTP_USERNAME),
+        password=str(settings.EXAMS_SFTP_PASSWORD),
+        cnopts=cnopts,
     ) as sftp:
-        with sftp.cd(settings.EXAMS_SFTP_PUT_DIR):
+        with sftp.cd(str(settings.EXAMS_SFTP_UPLOAD_DIR)):
             sftp.put(file_path)

@@ -51,6 +51,11 @@ services:
       CELERY_ALWAYS_EAGER: 'False'
       BROKER_URL: redis://redis:6379/4
       CELERY_RESULT_BACKEND: redis://redis:6379/4
+      EXAMS_SFTP_HOST: sftp
+      EXAMS_SFTP_USERNAME: odl
+      EXAMS_SFTP_PASSWORD: 123
+      EXAMS_SFTP_UPLOAD_DIR: share
+
     env_file: .env
     ports:
       - "8077:8077"
@@ -58,6 +63,7 @@ services:
       - db
       - elastic
       - redis
+      - sftp
 
   watch:
     build:
@@ -93,12 +99,26 @@ services:
       CELERY_RESULT_BACKEND: redis://redis:6379/4
       ELASTICSEARCH_URL: elastic:9200
       CELERY_ALWAYS_EAGER: 'False'
+      EXAMS_SFTP_HOST: sftp
+      EXAMS_SFTP_USERNAME: odl
+      EXAMS_SFTP_PASSWORD: 123
+      EXAMS_SFTP_UPLOAD_DIR: share
     env_file: .env
     links:
       - db
       - elastic
       - redis
+      - sftp
+
+  sftp:
+    image: atmoz/sftp
+    volumes:
+        - sftp_share:/home/odl/share
+    ports:
+        - "2022:22"
+    command: odl:123:1001:1001:share
 
 volumes:
   django_media: {}
+  sftp_share: {}
   yarn-cache: {}
