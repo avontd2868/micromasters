@@ -12,6 +12,7 @@ from exams.pearson import (
     upload_tsv,
 )
 from micromasters.celery import async
+from profiles.models import Profile
 
 
 @async.task
@@ -19,7 +20,7 @@ def export_exam_profiles():
     """
     Sync any outstanding profiles
     """
-    exam_profiles = ExamProfile.objects.filter(status=ExamProfile.PROFILE_PENDING)
+    exam_profiles = Profile.objects.filter(exam_profile__status=ExamProfile.PROFILE_PENDING)
     file_prefix = datetime.now(pytz.utc).strftime('ccd-%Y%m%d%H_')
     exam_profiles = list(exam_profiles)
 

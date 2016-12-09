@@ -161,6 +161,7 @@ class PearsonTest(TestCase):
             upload_tsv(FILENAME)
             connection_mock.assert_called_with(
                 EXAMS_SFTP_HOST,
+                EXAMS_SFTP_PORT,
                 EXAMS_SFTP_USERNAME,
                 EXAMS_SFTP_PASSWORD,
             )
