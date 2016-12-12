@@ -33,15 +33,22 @@ class ExamSignalsTest(TestCase):
         from exams.tasks import export_exam_profiles
 
         with mute_signals(post_save):
-            exam_profiles = ExamProfileFactory.create_batch(5, status=ExamProfile.PROFILE_PENDING)
+            exam_profiles = ExamProfileFactory.create_batch(10, status=ExamProfile.PROFILE_PENDING)
+
+        valid, invalid = exam_profiles[:5], exam_profiles[5:]
+
+        write_profiles_ccd_mock.return_value = (valid, invalid)
 
         export_exam_profiles()
-
-        exam_profile_ids = [exam_profile.id for exam_profile in exam_profiles]
-        exam_profiles = ExamProfile.objects.filter(id__in=exam_profile_ids)
 
         assert upload_tsv_mock.call_count == 1
         assert write_profiles_ccd_mock.call_count == 1
 
         for exam_profile in exam_profiles:
+            exam_profile.refresh_from_db()
+
+        for exam_profile in invalid:
+            assert exam_profile.status == ExamProfile.PROFILE_INVALID
+
+        for exam_profile in valid:
             assert exam_profile.status == ExamProfile.PROFILE_IN_PROGRESS

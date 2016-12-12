@@ -1,6 +1,7 @@
 """
 Tests for exams.pearson module
 """
+from unittest import mock
 from unittest.mock import patch
 
 import datetime
@@ -14,6 +15,7 @@ import pycountry
 import pytz
 
 from exams.exceptions import InvalidProfileDataException
+from exams.factories import ExamProfileFactory
 from exams.pearson import (
     CCD_FIELD_NAMES,
     LAST_UPDATE_FORMAT,
@@ -86,13 +88,13 @@ class PearsonTest(TestCase):
         """
         file = io.StringIO()
 
-        profiles = []
+        exam_profiles = []
         with mute_signals(post_save):
-            profiles.extend(ProfileFactory.create_batch(5))
-            profiles.extend(ProfileFactory.create_batch(5, address3='Room B345'))
-            profiles.extend(ProfileFactory.create_batch(5, address2=None))
+            exam_profiles.append(ExamProfileFactory.create(profile=ProfileFactory.create()))
+            exam_profiles.append(ExamProfileFactory.create(profile=ProfileFactory.create(address3='Room B345')))
+            exam_profiles.append(ExamProfileFactory.create(profile=ProfileFactory.create(address2=None)))
 
-        write_profiles_ccd(profiles, file)
+        write_profiles_ccd(exam_profiles, file)
 
         lines = file.getvalue().splitlines()
 
@@ -100,7 +102,8 @@ class PearsonTest(TestCase):
 
         assert header == '\t'.join(CCD_FIELD_NAMES)
 
-        for idx, profile in enumerate(profiles):
+        for idx, exam_profile in enumerate(exam_profiles):
+            profile = exam_profile.profile
             row = rows[idx]
             country = pycountry.countries.get(alpha_2=profile.country)
             assert row == ('\t'.join(map(str, [
@@ -130,7 +133,7 @@ class PearsonTest(TestCase):
         file = io.StringIO()
 
         with mute_signals(post_save):
-            profiles = [ProfileFactory.create(country='00')]
+            profiles = [ExamProfileFactory.create(profile=ProfileFactory.create(country='00'))]
 
         write_profiles_ccd(profiles, file)
 
@@ -144,28 +147,31 @@ class PearsonTest(TestCase):
         """
         Tests that upload uses the correct settings values
         """
-        EXAMS_SFTP_HOST = 'l0calh0st',
-        EXAMS_SFTP_USERNAME = 'username',
+        EXAMS_SFTP_HOST = 'l0calh0st'
+        EXAMS_SFTP_PORT = '345'
+        EXAMS_SFTP_USERNAME = 'username'
         EXAMS_SFTP_PASSWORD = 'password'
-        EXAMS_SFTP_PUT_DIR = '/tmp'
+        EXAMS_SFTP_UPLOAD_DIR = 'tmp'
         FILENAME = 'FILENAME'
 
         with self.settings(
             EXAMS_SFTP_HOST=EXAMS_SFTP_HOST,
+            EXAMS_SFTP_PORT=EXAMS_SFTP_PORT,
             EXAMS_SFTP_USERNAME=EXAMS_SFTP_USERNAME,
             EXAMS_SFTP_PASSWORD=EXAMS_SFTP_PASSWORD,
-            EXAMS_SFTP_PUT_DIR=EXAMS_SFTP_PUT_DIR
+            EXAMS_SFTP_UPLOAD_DIR=EXAMS_SFTP_UPLOAD_DIR
         ), patch('pysftp.Connection') as connection_mock:
             from exams.pearson import upload_tsv
 
             upload_tsv(FILENAME)
-            connection_mock.assert_called_with(
-                EXAMS_SFTP_HOST,
-                EXAMS_SFTP_PORT,
-                EXAMS_SFTP_USERNAME,
-                EXAMS_SFTP_PASSWORD,
+            connection_mock.assert_called_once_with(
+                host=EXAMS_SFTP_HOST,
+                port=int(EXAMS_SFTP_PORT),
+                username=EXAMS_SFTP_USERNAME,
+                password=EXAMS_SFTP_PASSWORD,
+                cnopts=mock.ANY,
             )
 
             ftp_mock = connection_mock.return_value.__enter__.return_value
-            ftp_mock.cd.assert_called_with(EXAMS_SFTP_PUT_DIR)
-            ftp_mock.put.assert_called_with(FILENAME)
+            ftp_mock.cd.assert_called_once_with(EXAMS_SFTP_UPLOAD_DIR)
+            ftp_mock.put.assert_called_once_with(FILENAME)
