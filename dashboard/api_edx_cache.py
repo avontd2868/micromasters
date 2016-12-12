@@ -45,7 +45,7 @@ class CachedEdxUserData:
             course_id (str): a string representing the edx course key for a course run
 
         Returns:
-            namedtuple: a object containing the cached data for the user in the course run
+            UserCachedRunData: a namedtuple containing the cached data for the user in the course run
         """
         return UserCachedRunData(
             edx_course_key=course_id,
