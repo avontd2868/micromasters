@@ -71,7 +71,7 @@ def profile_to_ccd_row(profile):
     return row
 
 
-def write_profiles_ccd(profiles, tsv_file):
+def write_profiles_ccd(exam_profiles, tsv_file):
     """
     Writes profiles to a tsv file using Pearson's CCD format
     """
@@ -84,15 +84,22 @@ def write_profiles_ccd(profiles, tsv_file):
 
     writer.writeheader()
 
-    for profile in profiles:
+    valid_profiles, invalid_profiles = [], []
+
+    for exam_profile in exam_profiles:
+        profile = exam_profile.profile
         try:
             writer.writerow(profile_to_ccd_row(profile))
+            valid_profiles.append(exam_profile)
         except InvalidProfileDataException:
             log.exception(
                 "Invalid country %s for user %s",
                 profile.country,
                 profile.user.id
             )
+            invalid_profiles.append(exam_profile)
+
+    return (valid_profiles, invalid_profiles)
 
 
 def upload_tsv(file_path):

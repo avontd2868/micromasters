@@ -32,3 +32,6 @@ class ExamProfile(Model):
         null=False,
         choices=PROFILE_STATUS_CHOICES
     )
+
+    def __str__(self):
+        return 'Exam Profile "{0}" with status "{1}"'.format(self.id, self.status)
