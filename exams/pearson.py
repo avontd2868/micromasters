@@ -27,6 +27,9 @@ log = logging.getLogger(__name__)
 
 
 def format_datetime(dt):
+    """
+    Formats a datetime to Pearson's required format
+    """
     return dt.strftime(PEARSON_DATETIME_FORMAT)
 
 
@@ -64,20 +67,20 @@ def writer(fields, field_prefix=None):
         return {column: field_mapper(nested) for column, field_mapper in field_mappers}
 
     def _writer(file, rows):
-        writer = csv.DictWriter(
+        tsv_writer = csv.DictWriter(
             file,
             columns,
             dialect='pearsontsv',
             restval='',  # ensure we don't print 'None' into the file for optional fields
         )
 
-        writer.writeheader()
+        tsv_writer.writeheader()
 
         valid_rows, invalid_rows = [], []
 
         for row in rows:
             try:
-                writer.writerow(_map_row(row))
+                tsv_writer.writerow(_map_row(row))
                 valid_rows.append(row)
             except InvalidTsvRow:
                 log.exception("Invalid tsv row")
