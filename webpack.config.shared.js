@@ -14,6 +14,7 @@ module.exports = {
     'style': './static/js/entry/style',
     'style_public': './static/js/entry/style_public',
     'zendesk_widget': './static/js/entry/zendesk_widget.js',
+    'support_request': './static/js/entry/support_request.js',
   },
   module: {
     loaders: [

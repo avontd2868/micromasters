@@ -20,7 +20,8 @@
     {% endif %}
     {% render_bundle "style" %}
     {% if has_zendesk_widget %}
-      {% render_bundle "zendesk_widget" %}
+      {# {% render_bundle "zendesk_widget" %} #}
+      {% render_bundle "support_request" %}
     {% endif %}
     <title>{% block title %}{% endblock %}</title>
     <meta name="description" content="{% block description %}{% endblock %}">

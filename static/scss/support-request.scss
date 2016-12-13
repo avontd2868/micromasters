@@ -1,0 +1,49 @@
+#support-request {
+  position: fixed;
+  right: 1em;
+  bottom: 1em;
+
+  button.support-request-launcher {
+    border-radius: 50%;
+  }
+
+  .support-request-form {
+    background-color: white;
+    border: 2px solid black;
+    border-radius: 5px;
+    padding: 10px;
+    position: relative;
+
+    h1 {
+      font-size: 14px;
+      font-weight: bold;
+      margin-top: 0;
+      margin-bottom: .5em;
+    }
+
+    label {
+      font-weight: normal;
+    }
+
+    textarea {
+      width: 100%;
+    }
+
+    textarea, button {
+      display: block;
+      margin-bottom: 1em;
+    }
+
+    button.close-button {
+      position: absolute;
+      top: 0;
+      right: 0;
+      border: 0;
+      background-color: transparent;
+    }
+
+    button.submit-button {
+      margin: 0 auto;
+    }
+  }
+}
