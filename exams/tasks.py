@@ -29,6 +29,7 @@ def export_exam_profiles():
     # this will be written out to a file like: /tmp/ccd-20160405_kjfiamdf.dat
     with tempfile.NamedTemporaryFile(
         prefix=file_prefix,
+        encoding='utf-8',
         suffix='.dat',
         mode='w',
     ) as tsv:
