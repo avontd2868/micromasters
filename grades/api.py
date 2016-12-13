@@ -195,6 +195,7 @@ def freeze_course_run_grades(course_run):
 
     # if it has already completed, do not do anything
     if FinalGradeRunInfo.objects.filter(course_run=course_run, status=FinalGradeStatus.COMPLETE).exists():
+        log.info('Final Grades freezing for course run "%s" has already been completed', course_run.edx_course_key)
         return
 
     # create an entry in with pending status ('pending' is the default status)
