@@ -51,6 +51,17 @@ class FinalGrade(TimestampedModel, AuditableModel):
     def to_dict(self):
         return serialize_model_object(self)
 
+    @classmethod
+    def get_frozen_users(cls, course_run):
+        """
+        Returns all the users with a final grade in a given course run
+        """
+        return list(
+            cls.objects.filter(
+                course_run=course_run, status=FinalGradeStatus.COMPLETE
+            ).values_list('user', flat=True)
+        )
+
     def __str__(self):
         return 'Grade in course "{course_id}", user "{user}", value {grade}'.format(
             user=self.user.username,
@@ -79,3 +90,16 @@ class FinalGradeAudit(AuditModel):
             user=self.final_grade.user,
             course_id=self.final_grade.course_run.edx_course_key
         )
+
+
+class FinalGradeRunInfo(TimestampedModel):
+    """
+    Additional information for the course run related to the final grades
+    """
+    course_run = models.OneToOneField(CourseRun, null=False)
+    status = models.CharField(
+        null=False,
+        choices=[(status, status) for status in FinalGradeStatus.ALL_STATUSES],
+        default=FinalGradeStatus.PENDING,
+        max_length=30,
+    )

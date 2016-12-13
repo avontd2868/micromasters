@@ -122,6 +122,13 @@ class CachedEdxInfoModel(Model):
         """
         return cls.deserialize_edx_data(cls.data_qset(user, program=program))
 
+    @classmethod
+    def get_cached_users(cls, course_run):
+        """
+        Retrieves all the usernames with entries in the cache for a given course run
+        """
+        return list(cls.objects.filter(course_run=course_run).values_list('user', flat=True))
+
     def __str__(self):
         """
         String representation of the model object
