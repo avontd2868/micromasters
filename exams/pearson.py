@@ -133,6 +133,17 @@ write_cdd_file = _tsv_writer([
 ], field_prefix='profile')
 
 
+ead_writer = writer([
+    ('AuthorizationTransactionType','operation'),
+    ('ClientAuthorizationID', lambda: settings.EXAMS_AUTHORIZATION_ID),
+    ('ClientCandidateId', 'user.profile.student_id'),
+    ('ExamSeriesCode', 'course.exam_series_code'),
+    ('EligibilityApptDateFirst', 'date_first_eligible'),
+    ('EligibilityApptDateLast', 'date_last_eligible'),
+    ('LastUpdate', 'updated_on'),
+])
+
+
 def upload_tsv(file_path):
     """
     Upload the given TSV files to the remote
