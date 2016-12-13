@@ -4,9 +4,13 @@ APIs for the grades app
 import logging
 from collections import namedtuple
 
+from django.conf import settings
 from django.contrib.auth.models import User
+from edx_api.client import EdxApi
 
-from dashboard.api_edx_cache import CachedEdxUserData
+from backends import utils
+from backends.edxorg import EdxOrgOAuth2
+from dashboard.api_edx_cache import CachedEdxUserData, CachedEdxDataApi
 from dashboard.models import CachedEnrollment
 from grades.models import (
     FinalGrade,
@@ -77,6 +81,25 @@ def _get_compute_func(course_run):
     return _compute_grade_for_fa if course_run.course.program.financial_aid_availability else _compute_grade_for_non_fa
 
 
+def _refresh_cache_final_grade(user):
+    """
+    Refreshes the user edX cache for certificates and current grade.
+
+    Args:
+        user (User): a django User
+
+    Returns:
+        None
+    """
+    # get the credentials for the current user for edX
+    user_social = user.social_auth.get(provider=EdxOrgOAuth2.name)
+    utils.refresh_user_token(user_social)
+    # create an instance of the client to query edX
+    edx_client = EdxApi(user_social.extra_data, settings.EDXORG_BASE_URL)
+    CachedEdxDataApi.update_cached_certificates(user, edx_client)
+    CachedEdxDataApi.update_cached_current_grades(user, edx_client)
+
+
 def get_final_grade(user, course_run):
     """
     Public function to compute final grades for the a user in a course run.
@@ -134,6 +157,13 @@ def freeze_user_final_grade(user, course_run):
             user.username, course_run.edx_course_key
         )
         return
+    # update one last time the user's certificates and current grades
+    try:
+        _refresh_cache_final_grade(user)
+    except:
+        log.exception('Impossible to refresh the edX cache for user "{0}"'.format(user.username))
+        return
+    # get the final grade for the user in the program
     try:
         final_grade = get_final_grade(user, course_run)
     except:
