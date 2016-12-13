@@ -3,8 +3,16 @@ Exceptions for exams
 """
 
 
-class InvalidProfileDataException(Exception):
+class InvalidTsvRow(Exception):
+    """
+    A row for a tsv is invalid
+    """
+    pass
+
+
+class InvalidProfileDataException(InvalidTsvRow):
     """
     Profile contains invalid data to sync
     """
     pass
+

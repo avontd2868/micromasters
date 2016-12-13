@@ -4,7 +4,6 @@ Tests for exams.pearson module
 from unittest import mock
 from unittest.mock import patch
 
-import datetime
 import io
 
 from django.db.models.signals import post_save
@@ -12,15 +11,15 @@ from django.test import TestCase
 from factory.django import mute_signals
 
 import pycountry
-import pytz
 
 from exams.exceptions import InvalidProfileDataException
 from exams.factories import ExamProfileFactory
 from exams.pearson import (
-    CCD_FIELD_NAMES,
-    LAST_UPDATE_FORMAT,
-    write_profiles_ccd,
-    profile_to_ccd_row,
+    PEARSON_DATETIME_FORMAT,
+    ccd_writer,
+    get_field_mapper,
+    optional_field,
+    profile_country_to_alpha3
 )
 from profiles.factories import ProfileFactory
 
@@ -30,33 +29,35 @@ class PearsonTest(TestCase):
     Tests for Pearson code
     """
 
-    def test_profile_to_ccd_row(self):  # pylint: disable=no-self-use
+    def test_optional_field(self):  # pylint: disable=no-self-use
         """
-        Test that profile_to_ccd_row returns a dict row
+        Test that optional_field returns expected values
         """
         with mute_signals(post_save):
             profile = ProfileFactory.create()
-        profile.updated_on = datetime.datetime(2014, 12, 17, 15, 45, 0, tzinfo=pytz.utc)
 
-        row = profile_to_ccd_row(profile)
-        country = pycountry.countries.get(alpha_2=profile.country)
+        assert optional_field('address1', profile) == profile.address1
+        assert optional_field('address3', profile) == ''
 
-        assert isinstance(row, dict)
-        assert row['ClientCandidateId'] == profile.student_id
-        assert row['FirstName'] == profile.romanized_first_name
-        assert row['LastName'] == profile.romanized_last_name
-        assert row['Email'] == profile.user.email
-        assert row['Address1'] == profile.address1
-        assert row['Address2'] == profile.address2
-        assert row['City'] == profile.city
-        assert row['State'] == profile.state_or_territory
-        assert row['PostalCode'] == profile.postal_code
-        assert row['Country'] == country.alpha_3
-        assert row['Phone'] == profile.phone_number
-        assert row['PhoneCountryCode'] == profile.phone_country_code
-        assert row['LastUpdate'] == '2014-12-17 15:45:00'
+    def test_get_field_mapper(self):  # pylint: disable=no-self-use
+        """
+        Tests that get_field_mapper handles input correctly
+        """
+        with mute_signals(post_save):
+            profile = ProfileFactory.create()
 
-        assert 'Address3' not in row
+        def get_addr1(profile):  # pylint: disable=missing-docstring
+            return profile.address1
+
+        assert get_field_mapper('address1')(profile) == profile.address1
+
+        addr1_field_mapper = get_field_mapper(get_addr1)
+
+        assert addr1_field_mapper == get_addr1
+        assert addr1_field_mapper(profile) == profile.address1
+
+        with self.assertRaises(TypeError):
+            get_field_mapper([])
 
     def test_profile_to_ccd_row_invalid_country(self):  # pylint: disable=no-self-use
         """
@@ -66,7 +67,7 @@ class PearsonTest(TestCase):
             profile = ProfileFactory.create()
         profile.country = 'XXXX'
         with self.assertRaises(InvalidProfileDataException):
-            profile_to_ccd_row(profile)
+            profile_country_to_alpha3(profile)
 
     def test_write_profiles_ccd_no_profiles(self):  # pylint: disable=no-self-use
         """
@@ -74,17 +75,32 @@ class PearsonTest(TestCase):
         """
         file = io.StringIO()
 
-        write_profiles_ccd([], file)
+        ccd_writer(file, [])
 
         lines = file.getvalue().splitlines()
+        header = lines[0].split('\t')
 
-        assert lines == [
-            '\t'.join(CCD_FIELD_NAMES),
+        assert len(lines) == 1
+        assert header == [
+            'ClientCandidateId',
+            'FirstName',
+            'LastName',
+            'Email',
+            'Address1',
+            'Address2',
+            'Address3',
+            'City',
+            'State',
+            'PostalCode',
+            'Country',
+            'Phone',
+            'PhoneCountryCode',
+            'LastUpdate',
         ]
 
-    def test_write_profiles_ccd(self):  # pylint: disable=no-self-use
+    def test_ccd_writer(self):  # pylint: disable=no-self-use
         """
-        Tests write_profiles_ccd against a set of profiles
+        Tests ccd_writer against a set of profiles
         """
         file = io.StringIO()
 
@@ -94,13 +110,11 @@ class PearsonTest(TestCase):
             exam_profiles.append(ExamProfileFactory.create(profile=ProfileFactory.create(address3='Room B345')))
             exam_profiles.append(ExamProfileFactory.create(profile=ProfileFactory.create(address2=None)))
 
-        write_profiles_ccd(exam_profiles, file)
+        ccd_writer(file, exam_profiles)
 
         lines = file.getvalue().splitlines()
 
-        header, rows = lines[0], lines[1:]
-
-        assert header == '\t'.join(CCD_FIELD_NAMES)
+        rows = lines[1:]
 
         for idx, exam_profile in enumerate(exam_profiles):
             profile = exam_profile.profile
@@ -120,22 +134,22 @@ class PearsonTest(TestCase):
                 country.alpha_3,
                 profile.phone_number,
                 profile.phone_country_code,
-                profile.updated_on.strftime(LAST_UPDATE_FORMAT),
+                profile.updated_on.strftime(PEARSON_DATETIME_FORMAT),
             ])))
 
             for cell in row.split('\t'):
                 assert cell != 'None'
 
-    def test_write_profiles_ccd_skips_invalid_state(self):  # pylint: disable=no-self-use
+    def test_ccd_writer_skips_invalid_state(self):  # pylint: disable=no-self-use
         """
         Tests write_profiles_ccd against a profiel with invalid state
         """
         file = io.StringIO()
 
         with mute_signals(post_save):
-            profiles = [ExamProfileFactory.create(profile=ProfileFactory.create(country='00'))]
+            profiles = [ExamProfileFactory.create(profile=ProfileFactory.create(country='XXXX'))]
 
-        write_profiles_ccd(profiles, file)
+        ccd_writer(file, profiles)
 
         lines = file.getvalue().splitlines()
 
