@@ -20,11 +20,11 @@ class ExamSignalsTest(TestCase):
     """
 
     @patch('exams.pearson.upload_tsv')
-    @patch('exams.pearson.write_profiles_ccd')
+    @patch('exams.pearson.ccd_writer')
     @override_settings(CELERY_ALWAYS_EAGER=True)
     def test_export_exam_profiles(
             self,
-            write_profiles_ccd_mock,
+            ccd_writer_mock,
             upload_tsv_mock,
     ):  # pylint: disable=no-self-use
         """
@@ -37,12 +37,12 @@ class ExamSignalsTest(TestCase):
 
         valid, invalid = exam_profiles[:5], exam_profiles[5:]
 
-        write_profiles_ccd_mock.return_value = (valid, invalid)
+        ccd_writer_mock.return_value = (valid, invalid)
 
         export_exam_profiles()
 
         assert upload_tsv_mock.call_count == 1
-        assert write_profiles_ccd_mock.call_count == 1
+        assert ccd_writer_mock.call_count == 1
 
         for exam_profile in exam_profiles:
             exam_profile.refresh_from_db()

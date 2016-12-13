@@ -8,7 +8,7 @@ import pytz
 
 from exams.models import ExamProfile
 from exams.pearson import (
-    write_profiles_ccd,
+    ccd_writer,
     upload_tsv,
 )
 from micromasters.celery import async
@@ -32,7 +32,7 @@ def export_exam_profiles():
         suffix='.dat',
         mode='w',
     ) as tsv:
-        valid_profiles, invalid_profiles = write_profiles_ccd(exam_profiles, tsv)
+        valid_profiles, invalid_profiles = ccd_writer(exam_profiles, tsv)
 
         # flush data to disk before upload
         tsv.flush()
