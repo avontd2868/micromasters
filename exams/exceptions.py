@@ -15,4 +15,3 @@ class InvalidProfileDataException(InvalidTsvRow):
     Profile contains invalid data to sync
     """
     pass
-
