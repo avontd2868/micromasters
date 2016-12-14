@@ -161,7 +161,8 @@ def is_near_now(time):
 
 def chunks(list_to_chunk, chunk_size=20):
     """
-    Divid list into sub lists each of max size chunk_size.
+    Splits list into sub lists each of max size chunk_size.
+
     Args:
         list_to_chunk (list): list of elements to chunk
         chunk_size (int): Max size of each sublist
