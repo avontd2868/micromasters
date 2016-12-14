@@ -19,31 +19,16 @@ from backends.edxorg import EdxOrgOAuth2
 from dashboard.models import UserCacheRefreshTime
 from dashboard.api_edx_cache import CachedEdxDataApi
 from micromasters.celery import async
+from micromasters.utils import chunks
 
 
 log = logging.getLogger(__name__)
 
 
-MAX_STUDENT_CHUNK_SIZE = 20  # max 20 students per sub task
 MAX_HRS_MAIN_TASK = 6
 PARALLEL_RATE_LIMIT = '10/m'
 LOCK_EXPIRE = 60 * 60 * 2  # Lock expires in 2 hrs
 lock_id = '{0}-lock'.format(uuid.uuid4())
-
-
-def chunks(students, chunk_size=MAX_STUDENT_CHUNK_SIZE):
-    """
-    Divid list into sub lists each of max size chunk_size.
-    Args:
-        students (List): list of studnets
-        chunk_size (Number): Max size of each sublist
-
-    Returns:
-    List: List of sublist containing student ids.
-    """
-    chunk_size = max(1, chunk_size)
-    for i in range(0, len(students), chunk_size):
-        yield students[i:i + chunk_size]
 
 
 @async.task

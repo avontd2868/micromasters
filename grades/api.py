@@ -161,13 +161,14 @@ def freeze_user_final_grade(user, course_run):
     try:
         _refresh_cache_final_grade(user)
     except:
-        log.exception('Impossible to refresh the edX cache for user "{0}"'.format(user.username))
+        log.exception('Impossible to refresh the edX cache for user "%s"', user.username)
         return
     # get the final grade for the user in the program
     try:
         final_grade = get_final_grade(user, course_run)
     except:
-        log.exception('Impossible to freeze final grade for user "{0}"'.format(user.username))
+        log.exception(
+            'Impossible to get final grade for user "%s" in course %s', user.username, course_run.edx_course_key)
         return
     FinalGrade.objects.create(
         user=user,
@@ -176,36 +177,3 @@ def freeze_user_final_grade(user, course_run):
         passed=final_grade.passed,
         status=FinalGradeStatus.COMPLETE
     )
-
-
-def freeze_course_run_grades(course_run):
-    """
-    Freezes all the users' final grade in a course run
-
-    Args:
-        course_run (CourseRun): a course run model object
-
-    Returns:
-        None
-    """
-    # no need to do anything if the course run is not ready
-    if not course_run.can_freeze_grades:
-        log.info('the grades course "%s" cannot be frozen yet', course_run.edx_course_key)
-        return
-
-    # if it has already completed, do not do anything
-    if FinalGradeRunInfo.objects.filter(course_run=course_run, status=FinalGradeStatus.COMPLETE).exists():
-        log.info('Final Grades freezing for course run "%s" has already been completed', course_run.edx_course_key)
-        return
-
-    # create an entry in with pending status ('pending' is the default status)
-    course_fg_info, _ = FinalGradeRunInfo.objects.get_or_create(course_run=course_run)
-
-    for user in get_users_final_grade_freeze(course_run):
-        freeze_user_final_grade(user, course_run)
-
-    # if after the freeze has run for the user there are no more users to freeze, set the run as complete
-    users_still_to_freeze = get_users_final_grade_freeze(course_run)
-    if users_still_to_freeze.count() == 0:
-        course_fg_info.staus = FinalGradeStatus.COMPLETE
-        course_fg_info.save()

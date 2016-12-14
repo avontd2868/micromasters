@@ -157,3 +157,18 @@ def is_near_now(time):
     now = datetime.datetime.now(tz=pytz.UTC)
     five_seconds = datetime.timedelta(0, 5)
     return now - five_seconds < time < now + five_seconds
+
+
+def chunks(list_to_chunk, chunk_size=20):
+    """
+    Divid list into sub lists each of max size chunk_size.
+    Args:
+        list_to_chunk (list): list of elements to chunk
+        chunk_size (int): Max size of each sublist
+
+    Returns:
+        list: List containing student ids.
+    """
+    chunk_size = max(1, chunk_size)
+    for i in range(0, len(list_to_chunk), chunk_size):
+        yield list_to_chunk[i:i + chunk_size]
