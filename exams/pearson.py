@@ -60,11 +60,12 @@ def writer(fields, field_prefix=None):
     """
     columns = [column for column, _ in fields]
     field_mappers = [(column, get_field_mapper(field)) for column, field in fields]
-    prefix_mapper = attrgetter(field_prefix)
+    prefix_mapper = attrgetter(field_prefix) if field_prefix else None
 
     def _map_row(row):
-        nested = prefix_mapper(row)
-        return {column: field_mapper(nested) for column, field_mapper in field_mappers}
+        if prefix_mapper:
+            row = prefix_mapper(row)
+        return {column: field_mapper(row) for column, field_mapper in field_mappers}
 
     def _writer(file, rows):
         tsv_writer = csv.DictWriter(
