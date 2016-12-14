@@ -1,6 +1,7 @@
 """
 Models for exams
 """
+from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import Model
 
@@ -66,7 +67,7 @@ class ExamAuthorization(TimestampedModel):
     )
 
     user = models.ForeignKey(
-        'profiles.Profile',
+        User,
         related_name='exam_authorizations'
     )
 
