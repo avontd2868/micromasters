@@ -260,3 +260,13 @@ class CourseRun(models.Model):
         if self.freeze_grade_date is None:
             raise ImproperlyConfigured('Missing freeze_grade_date')
         return datetime.now(pytz.utc) > self.freeze_grade_date
+
+    @classmethod
+    def get_runs_to_freeze(cls, exclude_list=None):
+        """
+        Returns a queryset of all the runs that can freeze final grade according to the freeze date.
+        """
+        course_runs = cls.objects.exclude(freeze_grade_date=None).filter(freeze_grade_date__lt=datetime.now(pytz.utc))
+        if course_runs is not None:
+            course_runs.exclude(pk__in=exclude_list)
+        return course_runs

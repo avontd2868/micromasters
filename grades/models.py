@@ -129,3 +129,14 @@ class FinalGradeRunInfo(TimestampedModel):
         """
         course_fg_info, _ = cls.objects.get_or_create(course_run=course_run)
         return course_fg_info
+
+    @classmethod
+    def get_frozen_course_runs(cls):
+        """
+        Returns all the course runs with a status complete
+        """
+        return list(
+            cls.objects.filter(
+                status=FinalGradeStatus.COMPLETE
+            ).values_list('course_run', flat=True)
+        )

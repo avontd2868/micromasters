@@ -7,6 +7,7 @@ from celery import group
 from celery.result import GroupResult
 from django.core.cache import cache
 
+from courses.models import CourseRun
 from grades.api import (
     freeze_user_final_grade,
     get_users_final_grade_freeze,
@@ -17,6 +18,25 @@ from micromasters.utils import chunks
 
 
 log = logging.getLogger(__name__)
+
+
+@async.task
+def find_course_runs_for_grade_freeze():
+    """
+    Async task that takes care of finding all the course
+    runs that can freeze the final grade to their students.
+
+    Args:
+        None
+
+    Returns:
+        None
+    """
+    # pull all the course run already frozen
+    frozen_runs = FinalGradeRunInfo.get_frozen_course_runs()
+    runs_to_freeze = CourseRun.get_runs_to_freeze(exclude_list=frozen_runs)
+    for run in runs_to_freeze:
+        freeze_course_run_final_grades.delay(run)
 
 
 @async.task
