@@ -24,6 +24,7 @@ class Program(models.Model):
     description = models.TextField(blank=True, null=True)
     financial_aid_availability = models.BooleanField(default=False, null=False)
     ga_tracking_id = models.CharField(max_length=255, blank=True, default="")
+    exam_series_code = models.CharField(max_length=20, null=True)
 
     def __str__(self):
         return self.title
@@ -63,6 +64,7 @@ class Course(models.Model):
     thumbnail = models.ImageField(null=True, blank=True)
     description = models.TextField(blank=True, null=True)
     prerequisites = models.TextField(blank=True, null=True)
+    exam_module = models.CharField(max_length=20, null=True)
 
     def __str__(self):
         return self.title
