@@ -20,7 +20,7 @@ class ExamSignalsTest(TestCase):
     """
 
     @patch('exams.pearson.upload_tsv')
-    @patch('exams.pearson.ccd_writer')
+    @patch('exams.pearson.write_cdd_file')
     @override_settings(CELERY_ALWAYS_EAGER=True)
     def test_export_exam_profiles(
             self,

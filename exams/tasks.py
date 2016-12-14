@@ -8,7 +8,7 @@ import pytz
 
 from exams.models import ExamProfile
 from exams.pearson import (
-    ccd_writer,
+    write_cdd_file,
     upload_tsv,
 )
 from micromasters.celery import async
@@ -19,10 +19,10 @@ def export_exam_profiles():
     """
     Sync any outstanding profiles
     """
-    exam_profiles = ExamProfile.objects \
-        .filter(status=ExamProfile.PROFILE_PENDING) \
-        .select_related('profile')
-    file_prefix = datetime.now(pytz.utc).strftime('ccd-%Y%m%d%H_')
+    exam_profiles = (ExamProfile.objects
+        .filter(status=ExamProfile.PROFILE_PENDING)
+        .select_related('profile'))
+    file_prefix = datetime.now(pytz.utc).strftime('cdd-%Y%m%d%H_')
     valid_profiles, invalid_profiles = [], []
 
     # write the file out locally
@@ -33,7 +33,7 @@ def export_exam_profiles():
         suffix='.dat',
         mode='w',
     ) as tsv:
-        valid_profiles, invalid_profiles = ccd_writer(exam_profiles, tsv)
+        valid_profiles, invalid_profiles = write_cdd_file(exam_profiles, tsv)
 
         # flush data to disk before upload
         tsv.flush()
@@ -44,9 +44,9 @@ def export_exam_profiles():
     # update records to reflect the successful upload
     if valid_profiles:
         exam_profile_ids = [exam_profile.id for exam_profile in valid_profiles]
-        ExamProfile.objects \
-            .filter(id__in=exam_profile_ids) \
-            .update(status=ExamProfile.PROFILE_IN_PROGRESS)
+        (ExamProfile.objects
+            .filter(id__in=exam_profile_ids)
+            .update(status=ExamProfile.PROFILE_IN_PROGRESS))
 
     # update records to reflect invalid profile
     if invalid_profiles:

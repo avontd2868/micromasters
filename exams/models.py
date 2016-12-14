@@ -19,7 +19,7 @@ class ExamProfile(Model):
         (PROFILE_PENDING, 'Sync Pending'),
         (PROFILE_IN_PROGRESS, 'Sync in Progress'),
         (PROFILE_FAILED, 'Sync Failed'),
-        (PROFILE_SUCCESS, 'Sync Suceeded'),
+        (PROFILE_SUCCESS, 'Sync Succeeded'),
         (PROFILE_INVALID, 'Profile Invalid'),
     )
 

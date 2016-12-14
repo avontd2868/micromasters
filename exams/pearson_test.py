@@ -16,10 +16,9 @@ from exams.exceptions import InvalidProfileDataException
 from exams.factories import ExamProfileFactory
 from exams.pearson import (
     PEARSON_DATETIME_FORMAT,
-    ccd_writer,
-    get_field_mapper,
-    optional_field,
-    profile_country_to_alpha3
+    write_cdd_file,
+    _get_field_mapper,
+    _profile_country_to_alpha3
 )
 from profiles.factories import ProfileFactory
 
@@ -29,19 +28,9 @@ class PearsonTest(TestCase):
     Tests for Pearson code
     """
 
-    def test_optional_field(self):  # pylint: disable=no-self-use
-        """
-        Test that optional_field returns expected values
-        """
-        with mute_signals(post_save):
-            profile = ProfileFactory.create()
-
-        assert optional_field('address1', profile) == profile.address1
-        assert optional_field('address3', profile) == ''
-
     def test_get_field_mapper(self):  # pylint: disable=no-self-use
         """
-        Tests that get_field_mapper handles input correctly
+        Tests that _get_field_mapper handles input correctly
         """
         with mute_signals(post_save):
             profile = ProfileFactory.create()
@@ -49,17 +38,17 @@ class PearsonTest(TestCase):
         def get_addr1(profile):  # pylint: disable=missing-docstring
             return profile.address1
 
-        assert get_field_mapper('address1')(profile) == profile.address1
+        assert _get_field_mapper('address1')(profile) == profile.address1
 
-        addr1_field_mapper = get_field_mapper(get_addr1)
+        addr1_field_mapper = _get_field_mapper(get_addr1)
 
         assert addr1_field_mapper == get_addr1
         assert addr1_field_mapper(profile) == profile.address1
 
         with self.assertRaises(TypeError):
-            get_field_mapper([])
+            _get_field_mapper([])
 
-    def test_profile_to_ccd_row_invalid_country(self):  # pylint: disable=no-self-use
+    def test_profile_country_to_alpha3_invalid_country(self):  # pylint: disable=no-self-use
         """
         A profile with an invalid country code should raise an InvalidProfileDataException
         """
@@ -67,15 +56,15 @@ class PearsonTest(TestCase):
             profile = ProfileFactory.create()
         profile.country = 'XXXX'
         with self.assertRaises(InvalidProfileDataException):
-            profile_country_to_alpha3(profile)
+            _profile_country_to_alpha3(profile)
 
-    def test_write_profiles_ccd_no_profiles(self):  # pylint: disable=no-self-use
+    def test_write_profiles_cdd_no_profiles(self):  # pylint: disable=no-self-use
         """
-        Tests write_profiles_ccd against an empty set of profiles
+        Tests write_cdd_file against an empty set of profiles
         """
         file = io.StringIO()
 
-        ccd_writer(file, [])
+        write_cdd_file(file, [])
 
         lines = file.getvalue().splitlines()
         header = lines[0].split('\t')
@@ -98,19 +87,22 @@ class PearsonTest(TestCase):
             'LastUpdate',
         ]
 
-    def test_ccd_writer(self):  # pylint: disable=no-self-use
+    def test_write_cdd_file(self):  # pylint: disable=no-self-use
         """
         Tests ccd_writer against a set of profiles
         """
         file = io.StringIO()
 
-        exam_profiles = []
-        with mute_signals(post_save):
-            exam_profiles.append(ExamProfileFactory.create(profile=ProfileFactory.create()))
-            exam_profiles.append(ExamProfileFactory.create(profile=ProfileFactory.create(address3='Room B345')))
-            exam_profiles.append(ExamProfileFactory.create(profile=ProfileFactory.create(address2=None)))
+        exam_profile_kwargs = [
+            {},
+            {'profile__address3': 'Room B345'},
+            {'profile__address2': None}
+        ]
 
-        ccd_writer(file, exam_profiles)
+        with mute_signals(post_save):
+            exam_profiles = [ExamProfileFactory.create(**kwargs) for kwargs in exam_profile_kwargs]
+
+        write_cdd_file(file, exam_profiles)
 
         lines = file.getvalue().splitlines()
 
@@ -140,16 +132,16 @@ class PearsonTest(TestCase):
             for cell in row.split('\t'):
                 assert cell != 'None'
 
-    def test_ccd_writer_skips_invalid_state(self):  # pylint: disable=no-self-use
+    def test_write_cdd_file_skips_invalid_state(self):  # pylint: disable=no-self-use
         """
-        Tests write_profiles_ccd against a profiel with invalid state
+        Tests write_cdd_file against a profiel with invalid state
         """
         file = io.StringIO()
 
         with mute_signals(post_save):
             profiles = [ExamProfileFactory.create(profile=ProfileFactory.create(country='XXXX'))]
 
-        ccd_writer(file, profiles)
+        write_cdd_file(file, profiles)
 
         lines = file.getvalue().splitlines()
 
