@@ -7,6 +7,7 @@ import csv
 import logging
 
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 import pycountry
 import pysftp
 
@@ -15,9 +16,11 @@ from exams.exceptions import (
     InvalidTsvRow,
 )
 
+PEARSON_CSV_DIALECT = 'pearsontsv'
+
 # custom csv dialect for Pearson
 csv.register_dialect(
-    'pearsontsv',
+    PEARSON_CSV_DIALECT,
     delimiter='\t',
 )
 
@@ -26,14 +29,14 @@ PEARSON_DATETIME_FORMAT = "%Y/%m/%d %H:%M:%S"
 log = logging.getLogger(__name__)
 
 
-def format_datetime(dt):
+def _format_datetime(dt):
     """
     Formats a datetime to Pearson's required format
     """
     return dt.strftime(PEARSON_DATETIME_FORMAT)
 
 
-def get_field_mapper(field):
+def _get_field_mapper(field):
     """
     Returns a field mapper, accepts either a property path in str form or a callable
     """
@@ -45,22 +48,31 @@ def get_field_mapper(field):
         raise TypeError("field_mapper must be a str or a callable")
 
 
-def writer(fields, field_prefix=None):
+def _tsv_writer(fields, field_prefix=None):
     """
-    Creates a new writer for the given field mappins
-    Usage:
+    Creates a new writer for the given field mappings
+
+    The first value of the fields tuple is the destination field name.
+    The second value is a str property path (e.g. "one.two.three") or
+    a callable that when passed a row returns a computed field value
+
+    Arguments:
+        fields (List): list of (str, str|callable) tuples
+        field_prefix (str): path prefix to prefix field lookups with
+    
+    Examples:
         test_writer = writer([
             ('OutputField1', 'prop1'),
             ...
-        ])
+        ], field_prefix="nested")
 
-        obj = SourceObj(prop1=1234)
+        obj = SourceObj(nested=Nested(prop1=1234))
 
         test_writer(file, [obj])
     """
     columns = [column for column, _ in fields]
-    field_mappers = [(column, get_field_mapper(field)) for column, field in fields]
-    prefix_mapper = attrgetter(field_prefix) if field_prefix else None
+    field_mappers = [(column, _get_field_mapper(field)) for column, field in fields]
+    prefix_mapper = attrgetter(field_prefix) if field_prefix is not None else None
 
     def _map_row(row):
         if prefix_mapper:
@@ -71,7 +83,7 @@ def writer(fields, field_prefix=None):
         tsv_writer = csv.DictWriter(
             file,
             columns,
-            dialect='pearsontsv',
+            dialect=PEARSON_CSV_DIALECT,
             restval='',  # ensure we don't print 'None' into the file for optional fields
         )
 
@@ -92,41 +104,33 @@ def writer(fields, field_prefix=None):
     return _writer
 
 
-def optional_field(field, value):
-    """
-    Returns value if it is not None, otherwise an empty string
-    """
-    value = get_field_mapper(field)(value)
-    return value if value else ''
-
-
-def profile_country_to_alpha3(profile):
+def _profile_country_to_alpha3(profile):
     """
     Returns the alpha3 code of a profile's country
     """
     # Pearson requires ISO-3166 alpha3 codes, but we store as alpha2
     try:
         country = pycountry.countries.get(alpha_2=profile.country)
-    except KeyError:
-        raise InvalidProfileDataException()
+    except KeyError as exc:
+        raise InvalidProfileDataException() from exc
     return country.alpha_3
 
 
-ccd_writer = writer([
+write_cdd_file = _tsv_writer([
     ('ClientCandidateId', 'student_id'),
     ('FirstName', 'romanized_first_name'),
     ('LastName', 'romanized_last_name'),
     ('Email', 'user.email'),
     ('Address1', 'address1'),
-    ('Address2', partial(optional_field, 'address2')),
-    ('Address3', partial(optional_field, 'address3')),
+    ('Address2', 'address2'),
+    ('Address3', 'address3'),
     ('City', 'city'),
     ('State', 'state_or_territory'),
     ('PostalCode', 'postal_code'),
-    ('Country', profile_country_to_alpha3),
+    ('Country', _profile_country_to_alpha3),
     ('Phone', 'phone_number'),
     ('PhoneCountryCode', 'phone_country_code'),
-    ('LastUpdate', lambda profile: format_datetime(profile.updated_on)),
+    ('LastUpdate', lambda profile: _format_datetime(profile.updated_on)),
 ], field_prefix='profile')
 
 
@@ -134,14 +138,26 @@ def upload_tsv(file_path):
     """
     Upload the given TSV files to the remote
     """
+    for key in [
+    	"EXAMS_SFTP_HOST",
+    	"EXAMS_SFTP_PASSWORD",
+    	"EXAMS_SFTP_PORT",
+    	"EXAMS_SFTP_UPLOAD_DIR",
+    	"EXAMS_SFTP_USERNAME",
+    ]:
+        if getattr(settings, key) is None:
+            raise ImproperlyConfigured(
+            	"The {} setting is required".format(key)
+            )
+
     cnopts = pysftp.CnOpts()
     cnopts.hostkeys = None  # ignore knownhosts
     with pysftp.Connection(
-        host=str(settings.EXAMS_SFTP_HOST),
+        host=settings.EXAMS_SFTP_HOST,
         port=int(settings.EXAMS_SFTP_PORT),
-        username=str(settings.EXAMS_SFTP_USERNAME),
-        password=str(settings.EXAMS_SFTP_PASSWORD),
+        username=settings.EXAMS_SFTP_USERNAME,
+        password=settings.EXAMS_SFTP_PASSWORD,
         cnopts=cnopts,
     ) as sftp:
-        with sftp.cd(str(settings.EXAMS_SFTP_UPLOAD_DIR)):
+        with sftp.cd(settings.EXAMS_SFTP_UPLOAD_DIR):
             sftp.put(file_path)
