@@ -17,6 +17,8 @@ from micromasters.celery import async
 from micromasters.utils import chunks
 
 
+CACHE_ID_BASE_STR = "freeze_grade_{0}"
+
 log = logging.getLogger(__name__)
 
 
@@ -61,7 +63,7 @@ def freeze_course_run_final_grades(course_run):
         return
 
     # cache id string for this task
-    cache_id = "freeze_grade_{}".format(course_run.edx_course_key)
+    cache_id = CACHE_ID_BASE_STR.format(course_run.edx_course_key)
 
     # try to get the result id from a previous iteration of this task for this course run
     group_results_id = cache.get(cache_id)

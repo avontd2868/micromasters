@@ -112,6 +112,13 @@ class FinalGradeRunInfo(TimestampedModel):
         return cls.objects.filter(course_run=course_run, status=FinalGradeStatus.COMPLETE).exists()
 
     @classmethod
+    def is_course_run_pending(cls, course_run):
+        """
+        Returns True if there is an entry with status 'complete'
+        """
+        return cls.objects.filter(course_run=course_run, status=FinalGradeStatus.PENDING).exists()
+
+    @classmethod
     def complete_course_run(cls, course_run):
         """
         Sets the status for the course_run to complete
