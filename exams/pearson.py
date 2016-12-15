@@ -133,15 +133,15 @@ write_cdd_file = _tsv_writer([
 ], field_prefix='profile')
 
 
-ead_writer = writer([
+write_ead_file = _tsv_writer([
     ('AuthorizationTransactionType', 'operation'),
     ('ClientAuthorizationID', lambda _: settings.EXAMS_AUTHORIZATION_ID),
     ('ClientCandidateId', 'user.profile.student_id'),
     ('ExamSeriesCode', 'course.program.exam_series_code'),
-    ('Modules', 'course.'),
-    ('EligibilityApptDateFirst', 'date_first_eligible'),
-    ('EligibilityApptDateLast', 'date_last_eligible'),
-    ('LastUpdate', 'updated_on'),
+    ('Modules', 'course.exam_module'),
+    ('EligibilityApptDateFirst', lambda exam_auth: _format_datetime(exam_auth.date_first_eligible)),
+    ('EligibilityApptDateLast', lambda exam_auth: _format_datetime(exam_auth.date_last_eligible)),
+    ('LastUpdate', lambda exam_auth: _format_datetime(exam_auth.updated_on)),
 ])
 
 

@@ -17,6 +17,7 @@ class ProgramFactory(DjangoModelFactory):
     title = fuzzy.FuzzyText(prefix="Program ")
     live = fuzzy.FuzzyAttribute(FAKE.boolean)
     description = fuzzy.FuzzyText()
+    exam_series_code = factory.LazyAttribute(lambda _: "DEDP_MicroMasters")
 
     class Meta:  # pylint: disable=missing-docstring
         model = Program
@@ -56,6 +57,7 @@ class CourseFactory(DjangoModelFactory):
 
     description = fuzzy.FuzzyText()
     prerequisites = fuzzy.FuzzyText(prefix="Course requires ")
+    exam_module = factory.LazyAttribute(lambda _: "14.73x")
 
     class Meta:  # pylint: disable=missing-docstring
         model = Course
