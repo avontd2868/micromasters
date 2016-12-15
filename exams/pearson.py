@@ -1,7 +1,6 @@
 """
 Pearson specific exam code
 """
-from functools import partial
 from operator import attrgetter
 import csv
 import logging
@@ -59,7 +58,7 @@ def _tsv_writer(fields, field_prefix=None):
     Arguments:
         fields (List): list of (str, str|callable) tuples
         field_prefix (str): path prefix to prefix field lookups with
-    
+
     Examples:
         test_writer = writer([
             ('OutputField1', 'prop1'),
@@ -139,15 +138,15 @@ def upload_tsv(file_path):
     Upload the given TSV files to the remote
     """
     for key in [
-    	"EXAMS_SFTP_HOST",
-    	"EXAMS_SFTP_PASSWORD",
-    	"EXAMS_SFTP_PORT",
-    	"EXAMS_SFTP_UPLOAD_DIR",
-    	"EXAMS_SFTP_USERNAME",
+            "EXAMS_SFTP_HOST",
+            "EXAMS_SFTP_PASSWORD",
+            "EXAMS_SFTP_PORT",
+            "EXAMS_SFTP_UPLOAD_DIR",
+            "EXAMS_SFTP_USERNAME",
     ]:
         if getattr(settings, key) is None:
             raise ImproperlyConfigured(
-            	"The {} setting is required".format(key)
+                "The {} setting is required".format(key)
             )
 
     cnopts = pysftp.CnOpts()

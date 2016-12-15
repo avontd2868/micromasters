@@ -20,8 +20,8 @@ def export_exam_profiles():
     Sync any outstanding profiles
     """
     exam_profiles = (ExamProfile.objects
-        .filter(status=ExamProfile.PROFILE_PENDING)
-        .select_related('profile'))
+                     .filter(status=ExamProfile.PROFILE_PENDING)
+                     .select_related('profile'))
     file_prefix = datetime.now(pytz.utc).strftime('cdd-%Y%m%d%H_')
     valid_profiles, invalid_profiles = [], []
 
@@ -45,12 +45,12 @@ def export_exam_profiles():
     if valid_profiles:
         exam_profile_ids = [exam_profile.id for exam_profile in valid_profiles]
         (ExamProfile.objects
-            .filter(id__in=exam_profile_ids)
-            .update(status=ExamProfile.PROFILE_IN_PROGRESS))
+         .filter(id__in=exam_profile_ids)
+         .update(status=ExamProfile.PROFILE_IN_PROGRESS))
 
     # update records to reflect invalid profile
     if invalid_profiles:
         exam_profile_ids = [exam_profile.id for exam_profile in invalid_profiles]
-        ExamProfile.objects \
-            .filter(id__in=exam_profile_ids) \
-            .update(status=ExamProfile.PROFILE_INVALID)
+        (ExamProfile.objects
+         .filter(id__in=exam_profile_ids)
+         .update(status=ExamProfile.PROFILE_INVALID))
