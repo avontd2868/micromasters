@@ -14,7 +14,6 @@ from dashboard.api_edx_cache import CachedEdxUserData, CachedEdxDataApi
 from dashboard.models import CachedEnrollment
 from grades.models import (
     FinalGrade,
-    FinalGradeRunInfo,
     FinalGradeStatus,
 )
 

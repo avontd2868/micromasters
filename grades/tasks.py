@@ -98,7 +98,7 @@ def freeze_course_run_final_grades(course_run):
 
     # create a group of subtasks to be run in parallel
     job = group(
-        freeze_users_final_grade_async.s(list_users) for list_users in chunks(users_qset)
+        freeze_users_final_grade_async.s(list_users, course_run) for list_users in chunks(users_qset)
     )
     results = job.apply_async()
     # save the result ID in the celery backend
