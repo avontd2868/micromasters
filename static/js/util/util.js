@@ -260,10 +260,13 @@ export function makeStrippedHtml(textOrElement: any): string {
   }
 }
 
-export function makeProfileImageUrl(profile: Profile): string {
+export function makeProfileImageUrl(profile: Profile, useSmall: ?boolean): string {
   let imageUrl = '/static/images/avatar_default.png';
   if (profile !== undefined && profile.image) {
     imageUrl = profile.image;
+  }
+  if (profile.image_small && useSmall) {
+    imageUrl = profile.image_small;
   }
 
   return imageUrl;

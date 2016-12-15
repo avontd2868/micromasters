@@ -1,19 +1,25 @@
 """
 Tests for util functions
 """
-
+from datetime import datetime
+from io import BytesIO
 from unittest import TestCase
+from unittest.mock import patch
+
+from factory.fuzzy import FuzzyInteger
+from PIL import Image
+import pytz
 
 from profiles import util
 
 
 # pylint: disable=no-self-use
-class UtilTests(TestCase):
+class SplitNameTests(TestCase):
     """
-    Tests for util functions
+    Tests for split_name
     """
 
-    def test_split_name_none(self):
+    def test_none(self):
         """
         None should be treated like an empty string
         """
@@ -21,7 +27,7 @@ class UtilTests(TestCase):
         assert first_name == ""
         assert last_name == ""
 
-    def test_split_name_empty(self):
+    def test_empty(self):
         """
         split_name should always return two parts
         """
@@ -29,7 +35,7 @@ class UtilTests(TestCase):
         assert first_name == ""
         assert last_name == ""
 
-    def test_split_name_one(self):
+    def test_one(self):
         """
         Split name should have the name as the first tuple item
         """
@@ -37,7 +43,7 @@ class UtilTests(TestCase):
         assert first_name == "one"
         assert last_name == ""
 
-    def test_split_name_two(self):
+    def test_two(self):
         """
         Split name with two names
         """
@@ -45,7 +51,7 @@ class UtilTests(TestCase):
         assert first_name == "two"
         assert last_name == "names"
 
-    def test_split_name_more_than_two(self):
+    def test_more_than_two(self):
         """
         Split name should be limited to two names
         """
@@ -53,10 +59,73 @@ class UtilTests(TestCase):
         assert first_name == "three"
         assert last_name == "names here"
 
-    def test_profile_image_upload_uri(self):
+
+class ImageTests(TestCase):
+    """Tests for profile image util functions"""
+    def test_upload_url(self):
         """
-        Test for long profile image upload uris
+        profile_image_upload_uri should make an upload path with a timestamp
+        """
+        filename = 'name.jpg'
+        timestamp = datetime.now(pytz.utc).replace(microsecond=0)
+        url = util.profile_image_upload_uri(None, filename)
+        assert url == 'profile/{name}-{timestamp}{ext}'.format(
+            name='name',
+            timestamp=timestamp.strftime("%Y-%m-%dT%H%M%S-%z"),
+            ext='.jpg',
+        )
+
+    def test_small(self):
+        """
+        profile_image_upload_uri_small should make an upload path with a timestamp
+        """
+        filename = 'name.jpg'
+        timestamp = datetime.now(pytz.utc).replace(microsecond=0)
+        url = util.profile_image_upload_uri_small(None, filename)
+        assert url == 'profile/{name}-{timestamp}_small{ext}'.format(
+            name='name',
+            timestamp=timestamp.strftime("%Y-%m-%dT%H%M%S-%z"),
+            ext='.jpg',
+        )
+
+    def test_too_long_name(self):
+        """
+        A name which is too long should get truncated to 100 characters
+        """
+        filename = '{}.jpg'.format('a' * 150)
+        full_path = util.profile_image_upload_uri(None, filename)
+        assert len(full_path) == 100
+        assert full_path.startswith("profile/")
+        assert full_path.endswith(".jpg")
+
+    def test_make_small_dimensions(self):
+        """Tests for make_small_dimensions"""
+        # If dimensions are too small no resizing should be done
+        assert util.make_small_dimensions(20, 63) == (20, 63)
+        # Both dimensions should shrink, maintaining same aspect ratio, until width or height is 64
+        # dimensions will be rounded down into ints
+        assert util.make_small_dimensions(20, 100) == (12, 64)
+        assert util.make_small_dimensions(100, 20) == (64, 12)
+
+    def test_make_thumbnail(self):
+        """
+        Test that image output by make_thumbnail uses dimensions provided by make_small_dimensions
         """
 
-        too_long_url = '{}.jpg'.format('a' * 150)
-        assert len(util.profile_image_upload_uri(None, too_long_url)) == 100
+        thumb_width = FuzzyInteger(1, 1024).fuzz()
+        thumb_height = FuzzyInteger(1, 1024).fuzz()
+        # To do the asserts correctly thumbnail dimensions have to have the same aspect ratio
+        width = thumb_width * 4
+        height = thumb_height * 4
+
+        image = Image.new('RGBA', (width, height))
+        full_image_file = BytesIO()
+        image.save(full_image_file, "PNG")
+        full_image_file.seek(0)
+
+        with patch('profiles.util.make_small_dimensions', return_value=(thumb_width, thumb_height)) as mocked:
+            thumb_file = util.make_thumbnail(full_image_file)
+            thumb_image = Image.open(thumb_file)
+            mocked.assert_called_with(width, height)
+            assert thumb_image.width == thumb_width
+            assert thumb_image.height == thumb_height

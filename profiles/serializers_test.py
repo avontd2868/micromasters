@@ -3,9 +3,12 @@ Tests for profile serializers
 """
 from copy import deepcopy
 from datetime import date
+from io import BytesIO
 
 from django.db.models.signals import post_save
+from django.core.files.uploadedfile import UploadedFile
 from factory.django import mute_signals
+from PIL import Image
 from rest_framework.fields import (
     CharField,
     ReadOnlyField,
@@ -86,6 +89,7 @@ class ProfileTests(ESTestCase):
                 EmploymentSerializer(profile.work_history.all(), many=True).data
             ),
             'image': profile.image.url,
+            'image_small': profile.image_small.url,
             'about_me': profile.about_me,
         }
 
@@ -327,6 +331,7 @@ class ProfileFilledOutTests(ESTestCase):
         """
         serializer = ProfileFilledOutSerializer(self.profile)
         self.data = serializer.data
+        self.profile.refresh_from_db()
 
     def assert_required_fields(self, field_names, parent_getter, field_parent_getter):
         """
@@ -343,6 +348,7 @@ class ProfileFilledOutTests(ESTestCase):
 
             clone = deepcopy(self.data)
             clone["image"] = self.profile.image
+            clone["image_small"] = self.profile.image_small
             parent_getter(clone)[key] = None
             with self.assertRaises(ValidationError) as ex:
                 ProfileFilledOutSerializer(data=clone).is_valid(raise_exception=True)
@@ -410,3 +416,49 @@ class ProfileFilledOutTests(ESTestCase):
             lambda profile: profile['education'][0],
             lambda profile: profile['education'].child,
         )
+
+    def test_image_small_created(self):
+        """
+        image_small should be created if image is present in PATCH
+        """
+        self.profile.image_small = None
+        self.profile.save()
+
+        self.data['image'] = self.profile.image
+        serializer = ProfileFilledOutSerializer(data=self.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.update(self.profile, serializer.validated_data)
+        self.profile.refresh_from_db()
+        assert self.profile.image_small is not None
+
+    def test_image_small_updated(self):
+        """
+        image_small should be updated if image is present in PATCH
+        """
+        old_image_small = self.profile.image_small
+        assert old_image_small is not None
+
+        # create a dummy image file in memory for upload
+        image_file = BytesIO()
+        image = Image.new('RGBA', size=(50, 50), color=(256, 0, 0))
+        image.save(image_file, 'png')
+        image_file.seek(0)
+
+        self.data['image'] = UploadedFile(image_file, "filename.png", "image/png", len(image_file.getvalue()))
+        serializer = ProfileFilledOutSerializer(data=self.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.update(self.profile, serializer.validated_data)
+        self.profile.refresh_from_db()
+        assert self.profile.image_small.file.read() != image_file.read()
+
+    def test_image_small_not_changed(self):
+        """
+        image_small should not be updated if PATCH is performed but image is not present in PATCH
+        """
+        self.data['image'] = self.profile.image
+        old_image_small = self.profile.image_small
+        serializer = ProfileFilledOutSerializer(data=self.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.update(self.profile, serializer.validated_data)
+        self.profile.refresh_from_db()
+        assert self.profile.image_small == old_image_small

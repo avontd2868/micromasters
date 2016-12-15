@@ -1,8 +1,9 @@
 """
 Serializers for user profiles
 """
-from django.db import transaction
+from uuid import uuid4
 
+from django.db import transaction
 from rest_framework.exceptions import ValidationError
 from rest_framework.serializers import (
     IntegerField,
@@ -17,6 +18,7 @@ from profiles.models import (
     Employment,
     Profile,
 )
+from profiles.util import make_thumbnail
 
 
 def update_work_history(work_history_list, profile_id):
@@ -176,6 +178,13 @@ class ProfileSerializer(ProfileBaseSerializer):
                     continue
                 else:
                     setattr(instance, attr, value)
+
+            if 'image' in validated_data:
+                thumbnail = make_thumbnail(validated_data['image'])
+
+                # name doesn't matter here, we use upload_to to produce that
+                instance.image_small.save("{}.jpg".format(uuid4().hex), thumbnail)
+
             instance.save()
             if 'work_history' in self.initial_data:
                 update_work_history(validated_data['work_history'], instance.id)
@@ -209,9 +218,10 @@ class ProfileSerializer(ProfileBaseSerializer):
             'edx_level_of_education',
             'education',
             'image',
+            'image_small',
             'about_me'
         )
-        read_only_fields = ('edx_level_of_education', 'agreed_to_terms_of_service',)
+        read_only_fields = ('edx_level_of_education', 'agreed_to_terms_of_service', 'image_small',)
 
 
 class ProfileLimitedSerializer(ProfileBaseSerializer):
@@ -239,7 +249,7 @@ class ProfileLimitedSerializer(ProfileBaseSerializer):
             'education',
             'about_me'
         )
-        read_only_fields = ('edx_level_of_education', 'agreed_to_terms_of_service',)
+        read_only_fields = ('edx_level_of_education', 'agreed_to_terms_of_service', 'image_small',)
 
 
 class ProfileFilledOutSerializer(ProfileSerializer):

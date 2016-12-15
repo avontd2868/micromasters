@@ -21,7 +21,7 @@ export default class LearnerResult extends React.Component {
     return (
       <Grid className="search-grid learner-result">
         <Cell col={1}>
-          <ProfileImage profile={profile} />
+          <ProfileImage profile={profile} useSmall={true} />
         </Cell>
         <Cell col={3} className="learner-name centered">
           <span>

@@ -5,7 +5,10 @@ from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField
 from django.db import models, transaction
 
-from profiles.util import profile_image_upload_uri
+from profiles.util import (
+    profile_image_upload_uri,
+    profile_image_upload_uri_small,
+)
 
 
 DOCTORATE = 'p'
@@ -155,6 +158,7 @@ class Profile(models.Model):
     about_me = models.TextField(blank=True, null=True)
 
     image = models.ImageField(upload_to=profile_image_upload_uri, null=True)
+    image_small = models.ImageField(upload_to=profile_image_upload_uri_small, null=True)
 
     edx_requires_parental_consent = models.NullBooleanField()
     date_of_birth = models.DateField(blank=True, null=True)

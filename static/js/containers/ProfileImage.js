@@ -42,6 +42,7 @@ class ProfileImage extends React.Component {
     showLink:             boolean,
     startPhotoEdit:       (p: File) => void,
     updatePhotoEdit:      (b: Blob) => void,
+    useSmall?:            boolean,
   };
 
   static defaultProps = {
@@ -96,8 +97,8 @@ class ProfileImage extends React.Component {
   };
 
   render () {
-    const { profile, showLink } = this.props;
-    const imageUrl = makeProfileImageUrl(profile);
+    const { profile, showLink, useSmall } = this.props;
+    const imageUrl = makeProfileImageUrl(profile, useSmall);
 
     return (
       <div className="profile-image">

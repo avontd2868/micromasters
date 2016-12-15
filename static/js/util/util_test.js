@@ -92,14 +92,23 @@ describe('utility functions', () => {
   describe('makeProfileImageUrl', () => {
     it('uses the profile image if available', () => {
       let url = "/url";
-      assert.equal(url, makeProfileImageUrl({ image: url }));
+      assert.equal(url, makeProfileImageUrl({ image: url }, false));
     });
 
     it('uses a default profile image if not available, removing duplicate slashes', () => {
       assert.equal(
         '/static/images/avatar_default.png',
-        makeProfileImageUrl({})
+        makeProfileImageUrl({}, false)
       );
+    });
+
+    it('uses the small profile image', () => {
+      let url = '/url';
+      let smallUrl = '/small';
+      assert.equal(smallUrl, makeProfileImageUrl({
+        image: url,
+        image_small: smallUrl,
+      }, true));
     });
   });
 

@@ -6,6 +6,7 @@ from io import BytesIO
 from unittest.mock import patch
 
 from dateutil.parser import parse
+import ddt
 from django.core.urlresolvers import resolve, reverse
 from django.db.models.signals import post_save
 from factory.django import mute_signals
@@ -55,6 +56,7 @@ from search.base import ESTestCase
 def format_image_expectation(profile):
     """formats a profile image to match what will be in JSON"""
     profile["image"] = "http://testserver{}".format(profile["image"])
+    profile["image_small"] = "http://testserver{}".format(profile["image_small"])
     return profile
 
 
@@ -286,6 +288,7 @@ class ProfileGETTests(ProfileBaseTests):
         assert resp.json() == format_image_expectation(profile_data)
 
 
+@ddt.ddt
 class ProfilePATCHTests(ProfileBaseTests):
     """
     Tests for profile PATCH
@@ -397,3 +400,102 @@ class ProfilePATCHTests(ProfileBaseTests):
         assert resp.status_code == 200, resp.content.decode('utf-8')
         assert profile.education.count() == 1
         assert profile.work_history.count() == 1
+
+    @ddt.data(
+        [True, False],
+        [True, False]
+    )
+    @ddt.unpack
+    def test_no_thumbnail_change_if_image_upload(self, image_already_exists, thumb_already_exists):
+        """
+        A patch without an image upload should not touch the image or the thumbnail
+        """
+        with mute_signals(post_save):
+            profile = ProfileFactory.create(user=self.user1, filled_out=False, agreed_to_terms_of_service=False)
+            if image_already_exists is False:
+                profile.image = None
+            if thumb_already_exists is False:
+                profile.image_small = None
+            profile.save()
+        self.client.force_login(self.user1)
+
+        patch_data = ProfileSerializer(profile).data
+        del patch_data['image']
+        del patch_data['image_small']
+
+        resp = self.client.patch(self.url1, content_type="application/json", data=json.dumps(patch_data))
+        assert resp.status_code == 200
+
+        profile.refresh_from_db()
+        assert bool(profile.image) == image_already_exists
+        assert bool(profile.image_small) == thumb_already_exists
+
+    @ddt.data(
+        [True, False],
+        [True, False]
+    )
+    @ddt.unpack
+    def test_upload_image_creates_thumbnail(self, image_already_exists, thumb_already_exists):
+        """
+        An image upload should cause the thumbnail to be updated
+        """
+        with mute_signals(post_save):
+            profile = ProfileFactory.create(user=self.user1, filled_out=False, agreed_to_terms_of_service=False)
+            if image_already_exists is False:
+                profile.image = None
+            if thumb_already_exists is False:
+                profile.image_small = None
+            profile.save()
+        self.client.force_login(self.user1)
+
+        patch_data = ProfileSerializer(profile).data
+        del patch_data['image']
+        del patch_data['image_small']
+
+        # create a dummy image file in memory for upload
+        image_file = BytesIO()
+        image = Image.new('RGBA', size=(500, 500), color=(256, 0, 0))
+        image.save(image_file, 'png')
+        image_file.seek(0)
+
+        # format patch using multipart upload
+        resp = self.client.patch(self.url1, data={
+            'image': image_file
+        }, format='multipart')
+        assert resp.status_code == 200, resp.content.decode('utf-8')
+
+        profile.refresh_from_db()
+        assert profile.image.height == 500
+        assert profile.image.width == 500
+        assert profile.image_small.height == 64
+        assert profile.image_small.width == 64
+
+    def test_readonly_image_small(self):
+        """
+        Users should not be able to modify image_small directly
+        """
+
+        with mute_signals(post_save):
+            profile = ProfileFactory.create(user=self.user1)
+        self.client.force_login(self.user1)
+
+        # create a dummy image file in memory for upload
+        image_file = BytesIO()
+        image = Image.new('RGBA', size=(500, 500), color=(256, 0, 0))
+        image.save(image_file, 'png')
+        image_file.seek(0)
+
+        # save old thumbnail
+        backup_thumb_bytes = profile.image_small.file.read()
+        profile.image_small.file.seek(0)
+
+        # format patch using multipart upload
+        resp = self.client.patch(self.url1, data={
+            'image_small': image_file
+        }, format='multipart')
+        assert resp.status_code == 200, resp.content.decode('utf-8')
+
+        profile.refresh_from_db()
+        # image_small should not have changed
+        thumb_bytes = profile.image_small.file.read()
+        assert thumb_bytes == backup_thumb_bytes
