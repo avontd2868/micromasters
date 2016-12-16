@@ -135,7 +135,7 @@ write_cdd_file = _tsv_writer([
 
 write_ead_file = _tsv_writer([
     ('AuthorizationTransactionType', 'operation'),
-    ('ClientAuthorizationID', lambda _: settings.EXAMS_AUTHORIZATION_ID),
+    ('ClientAuthorizationID', 'id'),
     ('ClientCandidateId', 'user.profile.student_id'),
     ('ExamSeriesCode', 'course.program.exam_series_code'),
     ('Modules', 'course.exam_module'),
