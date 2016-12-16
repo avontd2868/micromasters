@@ -23,9 +23,17 @@ csv.register_dialect(
     delimiter='\t',
 )
 
+PEARSON_DATE_FORMAT = "%Y/%m/%d"
 PEARSON_DATETIME_FORMAT = "%Y/%m/%d %H:%M:%S"
 
 log = logging.getLogger(__name__)
+
+
+def _format_date(date):
+    """
+    Formats a date to Pearson's required format
+    """
+    return date.strftime(PEARSON_DATE_FORMAT)
 
 
 def _format_datetime(dt):
@@ -139,8 +147,8 @@ write_ead_file = _tsv_writer([
     ('ClientCandidateId', 'user.profile.student_id'),
     ('ExamSeriesCode', 'course.program.exam_series_code'),
     ('Modules', 'course.exam_module'),
-    ('EligibilityApptDateFirst', lambda exam_auth: _format_datetime(exam_auth.date_first_eligible)),
-    ('EligibilityApptDateLast', lambda exam_auth: _format_datetime(exam_auth.date_last_eligible)),
+    ('EligibilityApptDateFirst', lambda exam_auth: _format_date(exam_auth.date_first_eligible)),
+    ('EligibilityApptDateLast', lambda exam_auth: _format_date(exam_auth.date_last_eligible)),
     ('LastUpdate', lambda exam_auth: _format_datetime(exam_auth.updated_on)),
 ])
 

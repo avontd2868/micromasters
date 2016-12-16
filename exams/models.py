@@ -87,8 +87,8 @@ class ExamAuthorization(TimestampedModel):
         choices=STATUS_CHOICES
     )
 
-    date_first_eligible = models.DateTimeField()
-    date_last_eligible = models.DateTimeField()
+    date_first_eligible = models.DateField()
+    date_last_eligible = models.DateField()
 
     def __str__(self):
         return 'Exam Authorization "{0}" with status "{1}" for user {2}'.format(
