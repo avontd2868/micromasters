@@ -75,11 +75,12 @@ export default class PersonalForm extends ProfileFormFields {
               {...this.defaultInputComponentProps()}
             />
           </Cell>
+          <Cell col={12}>
+            <Geosuggest id="current-home" label="Current Address"
+              placeholder="Example: 100 Main Street, Anytown, 01234, United States"
+              types={["geocode"]} />
+          </Cell>
         </Grid>
-        <section>
-          <h3>Where are you currently living?</h3>
-          <Geosuggest label="Current home" types={["geocode"]} />
-        </section>
         <section>
           <h3>Where are you from?</h3>
           <span className="tooltip-link"

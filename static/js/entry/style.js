@@ -19,7 +19,7 @@ import 'style!css!slick-carousel/slick/slick-theme.css';
 import 'style!css!react-datepicker/dist/react-datepicker.css';
 
 // react-geosuggest styles
-import 'style!css!react-geosuggest/module/geosuggest.css';
+// import 'style!css!react-geosuggest/module/geosuggest.css';
 
 // This should come last to override other styles
 import '../../scss/layout.scss';
