@@ -13,7 +13,6 @@ from grades.api import (
     get_users_final_grade_freeze,
 )
 from grades.models import FinalGradeRunInfo
-from mail.api import MailgunClient
 from micromasters.celery import async
 from micromasters.utils import chunks
 
@@ -119,6 +118,7 @@ def freeze_users_final_grade_async(users, course_run):
     Returns:
         None
     """
+    # pylint: disable=bare-except
     for user in users:
         try:
             freeze_user_final_grade(user, course_run)

@@ -149,6 +149,7 @@ def freeze_user_final_grade(user, course_run):
     Returns:
         None
     """
+    # pylint: disable=bare-except
     # no need to do anything if the course run is not ready
     if not course_run.can_freeze_grades:
         log.info(
