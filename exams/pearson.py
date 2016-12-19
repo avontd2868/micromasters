@@ -147,6 +147,7 @@ write_ead_file = _tsv_writer([
     ('ClientCandidateId', 'user.profile.student_id'),
     ('ExamSeriesCode', 'course.program.exam_series_code'),
     ('Modules', 'course.exam_module'),
+    ('Accommodations', lambda _: ''),
     ('EligibilityApptDateFirst', lambda exam_auth: _format_date(exam_auth.date_first_eligible)),
     ('EligibilityApptDateLast', lambda exam_auth: _format_date(exam_auth.date_last_eligible)),
     ('LastUpdate', lambda exam_auth: _format_datetime(exam_auth.updated_on)),

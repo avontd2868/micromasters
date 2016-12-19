@@ -38,7 +38,7 @@ def export_exam_profiles():
         suffix='.dat',
         mode='w',
     ) as tsv:
-        valid_profiles, invalid_profiles = write_cdd_file(exam_profiles, tsv)
+        valid_profiles, invalid_profiles = write_cdd_file(tsv, exam_profiles)
 
         # flush data to disk before upload
         tsv.flush()
