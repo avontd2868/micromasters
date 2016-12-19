@@ -13,6 +13,7 @@ from grades.api import (
     get_users_final_grade_freeze,
 )
 from grades.models import FinalGradeRunInfo
+from mail.api import MailgunClient
 from micromasters.celery import async
 from micromasters.utils import chunks
 
@@ -88,7 +89,6 @@ def freeze_course_run_final_grades(course_run):
     # if there are no more users to be froze, just complete the task
     if users_qset.count() == 0:
         FinalGradeRunInfo.complete_course_run(course_run)
-        # TODO: send an email with the number of users who received a final grade
         return
 
     # if the task reaches this point, it means there are users still to be processed
