@@ -2,7 +2,6 @@ var path = require("path");
 var webpack = require("webpack");
 
 module.exports = {
-<<<<<<< HEAD
   config: {
     entry: {
       'dashboard': ['babel-polyfill', './static/js/entry/dashboard'],
@@ -37,7 +36,10 @@ module.exports = {
         {
           test: /\.css$/,
           exclude: /node_modules/,
-          use: 'style-loader!css-loader'
+          use: [
+            { loader: 'style-loader' },
+            { loader: 'css-loader' }
+          ]
         },
       ]
     },
@@ -51,6 +53,7 @@ module.exports = {
         react: path.resolve('./node_modules/react')
       }
     }
+  }
 
   babelSharedLoader: {
     text: /\.jsx?$/,
