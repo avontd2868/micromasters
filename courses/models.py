@@ -268,5 +268,5 @@ class CourseRun(models.Model):
         """
         course_runs = cls.objects.exclude(freeze_grade_date=None).filter(freeze_grade_date__lt=datetime.now(pytz.utc))
         if course_runs is not None:
-            course_runs.exclude(pk__in=exclude_list)
+            course_runs = course_runs.exclude(pk__in=exclude_list)
         return course_runs

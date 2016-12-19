@@ -7,6 +7,7 @@ from urllib.parse import urljoin
 
 import pytz
 from ddt import ddt, data, unpack
+from django.core.exceptions import ImproperlyConfigured
 from django.test import override_settings
 
 from courses.factories import (
@@ -52,7 +53,8 @@ class CourseModelTests(ESTestCase):
         self.now = datetime.now(pytz.utc)
 
     def create_run(self, course=None, start=None, end=None,
-                   enr_start=None, enr_end=None, upgrade_deadline=None):
+                   enr_start=None, enr_end=None, upgrade_deadline=None,
+                   freeze_grade_date=None):
         """helper function to create course runs"""
         # pylint: disable=too-many-arguments
         return CourseRunFactory.create(
@@ -63,6 +65,7 @@ class CourseModelTests(ESTestCase):
             enrollment_start=enr_start,
             enrollment_end=enr_end,
             upgrade_deadline=upgrade_deadline,
+            freeze_grade_date=freeze_grade_date,
         )
 
     def from_weeks(self, weeks):
@@ -411,3 +414,36 @@ class CourseRunTests(CourseModelTests):
             upgrade_deadline=self.from_weeks(upgrade_deadline)
         )
         assert course_run.is_upgradable is expected
+
+    @data(
+        # freeze in the past
+        (-1, True),
+        # freeze in the future
+        (1, False),
+    )
+    @unpack
+    def test_can_freeze_grades(self, freeze_date, expected):
+        """Test for the can_freeze_grades property"""
+        course_run = self.create_run(
+            freeze_grade_date=self.from_weeks(freeze_date)
+        )
+        assert course_run.can_freeze_grades is expected
+
+    def test_can_freeze_grades_raises(self):
+        """Test for the can_freeze_grades property raises if not configured"""
+        course_run = self.create_run()
+        with self.assertRaises(ImproperlyConfigured):
+            course_run.can_freeze_grades  # pylint: disable=pointless-statement
+
+    def test_get_runs_to_freeze(self):
+        """Test for the get_runs_to_freeze classmethod"""
+        course_runs = []
+        for date in (-1, -2, 1, None):
+            course_runs.append(self.create_run(
+                freeze_grade_date=self.from_weeks(date)
+            ))
+        runs_to_freeze = CourseRun.get_runs_to_freeze(exclude_list=[course_runs[1].pk])
+        freeze_run_ids = [course_run.pk for course_run in runs_to_freeze]
+        assert course_runs[0].pk in freeze_run_ids
+        for run in course_runs[1:]:
+            assert run.pk not in freeze_run_ids
