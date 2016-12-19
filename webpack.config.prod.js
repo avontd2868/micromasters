@@ -29,16 +29,18 @@ module.exports = Object.assign(prodConfig, {
     new webpack.optimize.UglifyJsPlugin({
       compress: {
         warnings: false
-      }
+      },
+      sourceMap: true,
     }),
-    new webpack.optimize.OccurrenceOrderPlugin(),
-    new webpack.optimize.DedupePlugin(),
     new webpack.optimize.CommonsChunkPlugin({
       name: 'common',
       minChunks: 2,
     }),
     new BundleTracker({
       filename: './webpack-stats.json'
+    }),
+    new webpack.LoaderOptionsPlugin({
+      minimize: true
     })
   ],
   devtool: 'source-map'
