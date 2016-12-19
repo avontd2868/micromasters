@@ -3,6 +3,7 @@ import React from 'react';
 import Grid, { Cell } from 'react-mdl/lib/Grid';
 import ReactTooltip from 'react-tooltip';
 import _ from 'lodash';
+import Geosuggest from 'react-geosuggest';
 
 import LANGUAGE_CODES from '../data/language_codes';
 import SelectField from './inputs/SelectField';
@@ -77,29 +78,7 @@ export default class PersonalForm extends ProfileFormFields {
         </Grid>
         <section>
           <h3>Where are you currently living?</h3>
-          <Grid className="profile-form-grid">
-            <Cell col={4}>
-              <CountrySelectField
-                stateKeySet={['state_or_territory']}
-                countryKeySet={['country']}
-                topMenu={true}
-                label='Country'
-                {...this.defaultInputComponentProps()}
-              />
-            </Cell>
-            <Cell col={4}>
-              <StateSelectField
-                stateKeySet={['state_or_territory']}
-                countryKeySet={['country']}
-                topMenu={true}
-                label='State or Territory'
-                {...this.defaultInputComponentProps()}
-              />
-            </Cell>
-            <Cell col={4}>
-              {this.boundTextField(['city'], 'City')}
-            </Cell>
-          </Grid>
+          <Geosuggest label="Current home" types={["geocode"]} />
         </section>
         <section>
           <h3>Where are you from?</h3>
