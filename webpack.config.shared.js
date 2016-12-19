@@ -2,6 +2,7 @@ var path = require("path");
 var webpack = require("webpack");
 
 module.exports = {
+<<<<<<< HEAD
   config: {
     entry: {
       'dashboard': ['babel-polyfill', './static/js/entry/dashboard'],
@@ -13,32 +14,43 @@ module.exports = {
       'zendesk_widget': './static/js/entry/zendesk_widget.js',
     },
     module: {
-      loaders: [
+      rules: [
+        {
+          test: /\.jsx?$/,
+          exclude: /node_modules/,
+          use: 'babel-loader?' + JSON.stringify(babelQuerySettings)
+        },  // to transform JSX into JS
         {
           test: /\.(svg|ttf|woff|woff2|eot|gif)$/,
-          loader: 'url-loader'
+          use: 'url-loader'
         },
         {
           test: /\.scss$/,
           exclude: /node_modules/,
-          loader: 'style!css!postcss!sass'
+          use: [
+            { loader: 'style-loader' },
+            { loader: 'css-loader' },
+            { loader: 'postcss-loader' },
+            { loader: 'sass-loader' },
+          ]
         },
         {
           test: /\.css$/,
           exclude: /node_modules/,
-          loader: 'style!css'
+          use: 'style-loader!css-loader'
         },
       ]
     },
-
     resolve: {
-      modulesDirectories: ['node_modules'],
-      extensions: ['', '.js', '.jsx'],
+      modules: [
+        path.join(__dirname, "static/js"),
+        "node_modules"
+      ],
+      extensions: ['.js', '.jsx'],
       alias: {
         react: path.resolve('./node_modules/react')
       }
     }
-  },
 
   babelSharedLoader: {
     text: /\.jsx?$/,
