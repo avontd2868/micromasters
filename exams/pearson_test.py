@@ -1,21 +1,20 @@
 """
 Tests for exams.pearson module
 """
+from datetime import datetime
 from unittest import mock
 from unittest.mock import patch
 
 import io
 
+from django.core.exceptions import ImproperlyConfigured
 from django.db.models.signals import post_save
 from django.test import TestCase
 from factory.django import mute_signals
 
-import pycountry
-
 from exams.exceptions import InvalidProfileDataException
 from exams.factories import ExamProfileFactory
 from exams.pearson import (
-    PEARSON_DATETIME_FORMAT,
     write_cdd_file,
     _get_field_mapper,
     _profile_country_to_alpha3
@@ -66,26 +65,14 @@ class PearsonTest(TestCase):
 
         write_cdd_file(file, [])
 
-        lines = file.getvalue().splitlines()
-        header = lines[0].split('\t')
+        content = file.getvalue()
 
-        assert len(lines) == 1
-        assert header == [
-            'ClientCandidateId',
-            'FirstName',
-            'LastName',
-            'Email',
-            'Address1',
-            'Address2',
-            'Address3',
-            'City',
-            'State',
-            'PostalCode',
-            'Country',
-            'Phone',
-            'PhoneCountryCode',
-            'LastUpdate',
-        ]
+        assert content == (
+            "ClientCandidateId\tFirstName\tLastName\t"
+            "Email\tAddress1\tAddress2\tAddress3\t"
+            "City\tState\tPostalCode\tCountry\t"
+            "Phone\tPhoneCountryCode\tLastUpdate\r\n"
+        )
 
     def test_write_cdd_file(self):  # pylint: disable=no-self-use
         """
@@ -93,44 +80,38 @@ class PearsonTest(TestCase):
         """
         file = io.StringIO()
 
-        exam_profile_kwargs = [
-            {},
-            {'profile__address3': 'Room B345'},
-            {'profile__address2': None}
-        ]
+        kwargs = {
+            'profile__id': 14879,
+            'profile__romanized_first_name': 'Jane',
+            'profile__romanized_last_name': 'Smith',
+            'profile__user__email': 'jane@example.com',
+            'profile__address1': '1 Main St',
+            'profile__address2': 'Room B345',
+            'profile__city': 'Boston',
+            'profile__state_or_territory': 'Massachusetts',
+            'profile__country': 'US',
+            'profile__postal_code': '02115',
+            'profile__phone_number': '999-999-9999',
+            'profile__phone_country_code': '1',
+        }
 
         with mute_signals(post_save):
-            exam_profiles = [ExamProfileFactory.create(**kwargs) for kwargs in exam_profile_kwargs]
+            exam_profiles = [ExamProfileFactory.create(**kwargs)]
+
+        exam_profiles[0].profile.updated_on = datetime(2016, 5, 15, 15, 2, 55)
 
         write_cdd_file(file, exam_profiles)
 
         lines = file.getvalue().splitlines()
 
-        rows = lines[1:]
+        row = lines[1]
 
-        for idx, exam_profile in enumerate(exam_profiles):
-            profile = exam_profile.profile
-            row = rows[idx]
-            country = pycountry.countries.get(alpha_2=profile.country)
-            assert row == ('\t'.join(map(str, [
-                profile.student_id,
-                profile.romanized_first_name,
-                profile.romanized_last_name,
-                profile.user.email,
-                profile.address1,
-                profile.address2 or '',
-                profile.address3 or '',
-                profile.city,
-                profile.state_or_territory,
-                profile.postal_code,
-                country.alpha_3,
-                profile.phone_number,
-                profile.phone_country_code,
-                profile.updated_on.strftime(PEARSON_DATETIME_FORMAT),
-            ])))
-
-            for cell in row.split('\t'):
-                assert cell != 'None'
+        assert row == (
+            "14879\tJane\tSmith\tjane@example.com\t"
+            "1 Main St\tRoom B345\t\t"  # double tab is for blank address3
+            "Boston\tMassachusetts\t02115\tUSA\t"
+            "999-999-9999\t1\t2016/05/15 15:02:55"
+        )
 
     def test_write_cdd_file_skips_invalid_state(self):  # pylint: disable=no-self-use
         """
@@ -181,3 +162,53 @@ class PearsonTest(TestCase):
             ftp_mock = connection_mock.return_value.__enter__.return_value
             ftp_mock.cd.assert_called_once_with(EXAMS_SFTP_UPLOAD_DIR)
             ftp_mock.put.assert_called_once_with(FILENAME)
+
+    def test_upload_tsv_raise_improperly_configured(self):  # pylint: disable=no-self-use
+        """
+        Tests that upload raises ImproperlyConfigured if setting is missing
+        """
+
+        with self.settings(
+            EXAMS_SFTP_HOST=None,
+        ), patch('pysftp.Connection') as connection_mock:
+            from exams.pearson import upload_tsv
+
+            with self.assertRaises(ImproperlyConfigured):
+                upload_tsv('file.tsv')
+                connection_mock.assert_not_called()
+
+        with self.settings(
+            EXAMS_SFTP_PORT=None,
+        ), patch('pysftp.Connection') as connection_mock:
+            from exams.pearson import upload_tsv
+
+            with self.assertRaises(ImproperlyConfigured):
+                upload_tsv('file.tsv')
+                connection_mock.assert_not_called()
+
+        with self.settings(
+            EXAMS_SFTP_USERNAME=None,
+        ), patch('pysftp.Connection') as connection_mock:
+            from exams.pearson import upload_tsv
+
+            with self.assertRaises(ImproperlyConfigured):
+                upload_tsv('file.tsv')
+                connection_mock.assert_not_called()
+
+        with self.settings(
+            EXAMS_SFTP_PASSWORD=None,
+        ), patch('pysftp.Connection') as connection_mock:
+            from exams.pearson import upload_tsv
+
+            with self.assertRaises(ImproperlyConfigured):
+                upload_tsv('file.tsv')
+                connection_mock.assert_not_called()
+
+        with self.settings(
+            EXAMS_SFTP_UPLOAD_DIR=None,
+        ), patch('pysftp.Connection') as connection_mock:
+            from exams.pearson import upload_tsv
+
+            with self.assertRaises(ImproperlyConfigured):
+                upload_tsv('file.tsv')
+                connection_mock.assert_not_called()
