@@ -14,7 +14,8 @@ from courses.factories import ProgramFactory, CourseFactory, CourseRunFactory
 from dashboard import models
 from dashboard.api_edx_cache import (
     CachedEdxUserData,
-    CachedEdxDataApi
+    CachedEdxDataApi,
+    UserCachedRunData,
 )
 from dashboard.factories import (
     CachedEnrollmentFactory,
@@ -85,6 +86,18 @@ class CachedEdxUserDataTests(ESTestCase):
         p2_course_run_program = self.p2_course_run_1.course.program
         edx_user_data = CachedEdxUserData(self.user, program=p2_course_run_program)
         self.assert_edx_data_has_given_ids(edx_user_data, self.p2_course_run_keys)
+
+    def test_get_run_data(self):
+        """Test for the get_run_data method"""
+        edx_user_data = CachedEdxUserData(self.user)
+        run_data = edx_user_data.get_run_data(self.p1_course_run_keys[0])
+        assert isinstance(run_data, UserCachedRunData)
+        assert isinstance(run_data.enrollment, Enrollment)
+        assert isinstance(run_data.certificate, Certificate)
+        assert isinstance(run_data.current_grade, CurrentGrade)
+        assert run_data.enrollment.course_id == self.p1_course_run_keys[0]
+        assert run_data.certificate.course_id == self.p1_course_run_keys[0]
+        assert run_data.current_grade.course_id == self.p1_course_run_keys[0]
 
 
 class CachedEdxDataApiTests(ESTestCase):
