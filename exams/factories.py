@@ -4,9 +4,9 @@ Factories for exams
 from datetime import timedelta
 import pytz
 
-import factory
 import faker
-from factory import SubFactory, LazyAttribute
+import factory
+from factory import SubFactory
 from factory.django import DjangoModelFactory
 from factory.fuzzy import FuzzyChoice
 
@@ -20,6 +20,7 @@ from profiles.factories import ProfileFactory
 
 FAKE = faker.Factory.create()
 
+
 class ExamProfileFactory(DjangoModelFactory):
     """
     Factory for ExamProfile
@@ -31,6 +32,7 @@ class ExamProfileFactory(DjangoModelFactory):
 
     class Meta:  # pylint: disable=missing-docstring
         model = ExamProfile
+
 
 class ExamAuthorizationFactory(DjangoModelFactory):
     """
@@ -49,7 +51,7 @@ class ExamAuthorizationFactory(DjangoModelFactory):
         lambda x: FAKE.date_time_this_year(before_now=False, after_now=True, tzinfo=pytz.utc).date()
     )
     date_last_eligible = factory.LazyAttribute(
-        lambda x: x.date_first_eligible + timedelta(days=10) 
+        lambda x: x.date_first_eligible + timedelta(days=10)
     )
 
     class Meta:  # pylint: disable=missing-docstring

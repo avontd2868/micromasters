@@ -16,7 +16,6 @@ from exams.pearson import (
     write_ead_file,
 )
 from micromasters.celery import async
-from profiles.models import Profile
 
 
 @async.task
@@ -61,7 +60,6 @@ def export_exam_profiles():
          .update(status=ExamProfile.PROFILE_INVALID))
 
 
-
 @async.task
 def export_exam_authorizations():
     """
@@ -71,7 +69,7 @@ def export_exam_authorizations():
                            .filter(status=ExamAuthorization.STATUS_PENDING)
                            .prefetch_related('user__profile', 'course__program'))
     file_prefix = datetime.now(pytz.utc).strftime('ead-%Y%m%d%H_')
-    valid_auths, invalid_auths = [], []
+    valid_auths = []
 
     # write the file out locally
     # this will be written out to a file like: /tmp/ead-20160405_kjfiamdf.dat
