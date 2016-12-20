@@ -124,3 +124,17 @@ class FinalGradeFuncsTests(ESTestCase):
         enr.assert_not_called()
         cert.assert_called_once_with(self.user, ANY)
         grades.assert_called_once_with(self.user, ANY)
+
+    @patch('grades.api._compute_grade_for_non_fa', autospec=True)
+    @patch('grades.api._compute_grade_for_fa', autospec=True)
+    def test_get_final_grade(self, fa, non_fa):
+        """
+        tests for get_final_grade function
+        """
+        cruns = (self.course_run1, self.course_run3,)
+
+        for crun in cruns:
+            api.get_final_grade(self.user, crun)
+
+        fa.assert_called_once_with(self.user_edx_data.get_run_data(self.course_run1.edx_course_key))
+        non_fa.assert_called_once_with(self.user_edx_data.get_run_data(self.course_run3.edx_course_key))
