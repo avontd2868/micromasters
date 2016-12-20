@@ -259,7 +259,7 @@ export function boundGeosuggest(keySet: string[], label: string|React$Element<*>
       updateValidationVisibility(keySet);
       updateProfile(clone, validator);
     }
-  }
+  };
 
   const hasValue = R.and(
     R.compose(R.not, R.isEmpty),
@@ -277,7 +277,7 @@ export function boundGeosuggest(keySet: string[], label: string|React$Element<*>
     hasExistingAddress,
     R.compose(R.join(", "), R.props(keySet)),
     R.always(""),
-  )
+  );
 
   const initial = formatInitialAddress(profile);
 
