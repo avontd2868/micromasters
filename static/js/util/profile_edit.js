@@ -236,8 +236,11 @@ export function boundGeosuggest(keySet: string[], label: string|React$Element<*>
   };
 
   const onSuggestSelect = (suggest) => {
-    let clone = _.cloneDeep(profile);
+    if (!suggest || !suggest.gmaps) {
+      return;
+    }
     const components = suggest.gmaps.address_components;
+    let clone = _.cloneDeep(profile);
     keySet.forEach((key) => {
       const gmapType = addressComponentTypeMap[key];
       const component = _.find(components, (c) => _.includes(c.types, gmapType));
@@ -247,13 +250,42 @@ export function boundGeosuggest(keySet: string[], label: string|React$Element<*>
     updateProfile(clone, validator);
   };
 
-  const initial = _.join(_.map(keySet, (key) => profile[key]), ', ');
+  const onBlur = (value) => {
+    if (!value) {
+      let clone = _.cloneDeep(profile);
+      keySet.forEach((key) => {
+        clone[key] = null;
+      });
+      updateValidationVisibility(keySet);
+      updateProfile(clone, validator);
+    }
+  }
+
+  const hasValue = R.and(
+    R.compose(R.not, R.isEmpty),
+    R.compose(R.not, R.isNil),
+  );
+  const hasKeySetProps = R.allPass(R.map(R.has, keySet));
+
+  const hasExistingAddress = R.allPass([
+    hasValue,
+    hasKeySetProps,
+    R.compose(R.all(hasValue), R.props(keySet)),
+  ]);
+
+  const formatInitialAddress = R.ifElse(
+    hasExistingAddress,
+    R.compose(R.join(", "), R.props(keySet)),
+    R.always(""),
+  )
+
+  const initial = formatInitialAddress(profile);
 
   return (
     <div>
       <Geosuggest initialValue={initial}
         id={id} label={label} placeholder={placeholder} types={types}
-        onSuggestSelect={onSuggestSelect}
+        onSuggestSelect={onSuggestSelect} onBlur={onBlur}
       />
       <span className="validation-error-text">
         {_.get(errors, keySet)}
