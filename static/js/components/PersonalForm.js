@@ -3,12 +3,10 @@ import React from 'react';
 import Grid, { Cell } from 'react-mdl/lib/Grid';
 import ReactTooltip from 'react-tooltip';
 import _ from 'lodash';
-import Geosuggest from 'react-geosuggest';
 
 import LANGUAGE_CODES from '../data/language_codes';
 import SelectField from './inputs/SelectField';
 import CountrySelectField from './inputs/CountrySelectField';
-import StateSelectField from './inputs/StateSelectField';
 import ProfileFormFields from '../util/ProfileFormFields';
 import type {
   Profile,
@@ -76,9 +74,13 @@ export default class PersonalForm extends ProfileFormFields {
             />
           </Cell>
           <Cell col={12}>
-            <Geosuggest id="current-home" label="Current Address"
-              placeholder="Example: 100 Main Street, Anytown, 01234, United States"
-              types={["geocode"]} />
+            {this.boundGeosuggest(["city", "state_or_territory", "country"], "Current address",
+              {
+                id: "current-home",
+                placeholder: "Example: 100 Main Street, Anytown, 01234, United States",
+                types: ["geocode"]
+              }
+            )}
           </Cell>
         </Grid>
         <section>

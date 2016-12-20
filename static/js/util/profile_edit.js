@@ -1,10 +1,11 @@
 // @flow
 import React from 'react';
 import _ from 'lodash';
+import R from 'ramda';
 import TextField from 'material-ui/TextField';
 import { RadioButton, RadioButtonGroup } from 'material-ui/RadioButton';
 import Checkbox from 'material-ui/Checkbox';
-import R from 'ramda';
+import Geosuggest from 'react-geosuggest';
 
 import DateField from '../components/inputs/DateField';
 import { validationErrorSelector, classify } from './util';
@@ -207,6 +208,53 @@ export function boundCheckbox(keySet: string[], label: string|React$Element<*>):
           { label }
         </span>
       </div>
+      <span className="validation-error-text">
+        {_.get(errors, keySet)}
+      </span>
+    </div>
+  );
+}
+
+
+export function boundGeosuggest(keySet: string[], label: string|React$Element<*>,
+  { id, placeholder, types }: { id: string, placeholder: string, types: string[] } = {}
+): React$Element<*> {
+  const {
+    profile,
+    errors,
+    updateProfile,
+    validator,
+    updateValidationVisibility,
+  } = this.props;
+
+  const addressComponentTypeMap = {
+    // From the name that we use, to the component type that Google Maps uses.
+    // See https://developers.google.com/maps/documentation/geocoding/intro#Types
+    "city": "locality",
+    "state_or_territory": "administrative_area_level_1",
+    "country": "country",
+  };
+
+  const onSuggestSelect = (suggest) => {
+    let clone = _.cloneDeep(profile);
+    const components = suggest.gmaps.address_components;
+    keySet.forEach((key) => {
+      const gmapType = addressComponentTypeMap[key];
+      const component = _.find(components, (c) => _.includes(c.types, gmapType));
+      clone[key] = component.long_name;
+    });
+    updateValidationVisibility(keySet);
+    updateProfile(clone, validator);
+  };
+
+  const initial = _.join(_.map(keySet, (key) => profile[key]), ', ');
+
+  return (
+    <div>
+      <Geosuggest initialValue={initial}
+        id={id} label={label} placeholder={placeholder} types={types}
+        onSuggestSelect={onSuggestSelect}
+      />
       <span className="validation-error-text">
         {_.get(errors, keySet)}
       </span>
