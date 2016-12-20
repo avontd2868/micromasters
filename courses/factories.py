@@ -90,6 +90,9 @@ class CourseRunFactory(DjangoModelFactory):
     end_date = factory.LazyAttribute(
         lambda x: FAKE.date_time_this_year(before_now=False, after_now=True, tzinfo=pytz.utc)
     )
+    freeze_grade_date = factory.LazyAttribute(
+        lambda x: FAKE.date_time_this_year(before_now=False, after_now=True, tzinfo=pytz.utc)
+    )
     fuzzy_start_date = factory.LazyAttribute(
         lambda x: "Starting {}".format(FAKE.sentence())
     )
