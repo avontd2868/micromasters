@@ -24,9 +24,9 @@ from search.base import ESTestCase
 # pylint: disable=no-self-use, protected-access
 
 
-class FinalGradeFuncsTests(ESTestCase):
+class GradeAPITests(ESTestCase):
     """
-    Tests for final grades functions
+    Tests for final grades api
     """
 
     @classmethod
