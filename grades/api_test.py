@@ -5,7 +5,7 @@ from unittest.mock import patch, MagicMock, ANY
 
 from backends.edxorg import EdxOrgOAuth2
 from courses.factories import CourseRunFactory
-from dashboard.api_edx_cache import CachedEdxUserData
+from dashboard.api_edx_cache import CachedEdxUserData, UserCachedRunData
 from dashboard.factories import (
     CachedCertificateFactory,
     CachedCurrentGradeFactory,
@@ -136,5 +136,14 @@ class FinalGradeFuncsTests(ESTestCase):
         for crun in cruns:
             api.get_final_grade(self.user, crun)
 
-        fa.assert_called_once_with(self.user_edx_data.get_run_data(self.course_run1.edx_course_key))
-        non_fa.assert_called_once_with(self.user_edx_data.get_run_data(self.course_run3.edx_course_key))
+        assert fa.called is True
+        assert fa.call_count == 1
+        call_arg = fa.call_args_list[0][0][0]
+        assert isinstance(call_arg, UserCachedRunData)
+        assert call_arg.edx_course_key == self.course_run1.edx_course_key
+
+        assert non_fa.called is True
+        assert non_fa.call_count == 1
+        call_arg = non_fa.call_args_list[0][0][0]
+        assert isinstance(call_arg, UserCachedRunData)
+        assert call_arg.edx_course_key == self.course_run3.edx_course_key
