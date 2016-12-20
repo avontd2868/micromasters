@@ -215,6 +215,18 @@ export function boundCheckbox(keySet: string[], label: string|React$Element<*>):
   );
 }
 
+const addressComponentTypeMap = {
+  // From the name that we use, to the component type that Google Maps uses.
+  // See https://developers.google.com/maps/documentation/geocoding/intro#Types
+  "city": "locality",
+  "state_or_territory": "administrative_area_level_1",
+  "country": "country",
+};
+
+const hasValue = R.and(
+  R.compose(R.not, R.isEmpty),
+  R.compose(R.not, R.isNil),
+);
 
 export function boundGeosuggest(keySet: string[], label: string|React$Element<*>,
   { id, placeholder, types }: { id: string, placeholder: string, types: string[] } = {}
@@ -226,14 +238,6 @@ export function boundGeosuggest(keySet: string[], label: string|React$Element<*>
     validator,
     updateValidationVisibility,
   } = this.props;
-
-  const addressComponentTypeMap = {
-    // From the name that we use, to the component type that Google Maps uses.
-    // See https://developers.google.com/maps/documentation/geocoding/intro#Types
-    "city": "locality",
-    "state_or_territory": "administrative_area_level_1",
-    "country": "country",
-  };
 
   const onSuggestSelect = (suggest) => {
     if (!suggest || !suggest.gmaps) {
@@ -261,10 +265,6 @@ export function boundGeosuggest(keySet: string[], label: string|React$Element<*>
     }
   };
 
-  const hasValue = R.and(
-    R.compose(R.not, R.isEmpty),
-    R.compose(R.not, R.isNil),
-  );
   const hasKeySetProps = R.allPass(R.map(R.has, keySet));
 
   const hasExistingAddress = R.allPass([
