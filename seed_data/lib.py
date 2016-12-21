@@ -5,9 +5,9 @@ import re
 from datetime import datetime, timedelta
 from functools import wraps
 import pytz
-
+from django.db.utils import IntegrityError
 from django.contrib.auth.models import User
-from courses.models import Program, Course
+from courses.models import Program, Course, CourseRun
 from dashboard.api_edx_cache import CachedEdxDataApi
 from dashboard.models import CachedCertificate, CachedEnrollment, CachedCurrentGrade, UserCacheRefreshTime
 from financialaid.factories import TierProgramFactory
@@ -36,27 +36,32 @@ class ModelFinder(object):
     model_cls = None
     param_keys = {}
 
-    def result(self, objects, params):
+    @classmethod
+    def result(cls, objects, params):
         """
         Processes the results from a query; returns a single model object or throws a
         relevant error if more or less than one record was found
         """
         if not params:
-            raise Exception('No parameters given for {} records. Accepted parameters: [{}]'.format(
-                self.model_cls.__name__,
-                self.param_keys
-            ))
+            raise Exception(
+                'No parameters given for {} records. Accepted parameters: [{}]'.format(
+                    cls.model_cls.__name__,
+                    cls.param_keys
+                )
+            )
         elif len(objects) == 0:
             raise Exception(
                 'No {} found with the given params ({})'.format(
-                    self.model_cls.__name__,
+                    cls.model_cls.__name__,
                     params
                 )
             )
         elif len(objects) > 1:
+            exc_text = "Multiple {} records found with the given params ({}). These parameters need to " + \
+                "be specific enough to match a single record.\n{}"
             raise Exception(
-                'Multiple {} records found with the given params ({}).\n{}'.format(
-                    self.model_cls.__name__,
+                exc_text.format(
+                    cls.model_cls.__name__,
                     params,
                     '\n'.join(str(obj) for obj in objects)
                 )
@@ -64,18 +69,20 @@ class ModelFinder(object):
         else:
             return objects[0]
 
-    def calculate_params(self, **kwargs):
+    @classmethod
+    def calculate_params(cls, **kwargs):
         """Takes a set of keyword args and creates query parameters from them"""
         raise NotImplementedError
 
-    def find(self, **kwargs):
+    @classmethod
+    def find(cls, **kwargs):
         """
         Takes some keyword arguments that will be translated into query parameters, and
         returns the result (or an error)
         """
-        params = self.calculate_params(**kwargs)
-        users = self.model_cls.objects.filter(**params).all()
-        return self.result(users, params)
+        params = cls.calculate_params(**kwargs)
+        matching_objects = cls.model_cls.objects.filter(**params).all()
+        return cls.result(matching_objects, params)
 
 
 class UserFinder(ModelFinder):
@@ -83,7 +90,8 @@ class UserFinder(ModelFinder):
     model_cls = User
     param_keys = {'username', 'email'}
 
-    def calculate_params(self, **kwargs):
+    @classmethod
+    def calculate_params(cls, **kwargs):
         params = {}
         if 'username' in kwargs:
             params['username__contains'] = kwargs['username']
@@ -97,7 +105,8 @@ class CourseFinder(ModelFinder):
     model_cls = Course
     param_keys = {'program_title', 'course_level', 'course_title'}
 
-    def calculate_params(self, **kwargs):
+    @classmethod
+    def calculate_params(cls, **kwargs):
         params = {}
         if 'program_title' in kwargs:
             params['program__title__contains'] = kwargs['program_title']
@@ -105,6 +114,21 @@ class CourseFinder(ModelFinder):
             params['title__endswith'] = kwargs['course_level']
         if 'course_title' in kwargs:
             params['title__contains'] = kwargs['course_title']
+        return params
+
+
+class CourseRunFinder(ModelFinder):
+    """Finds a single CourseRun"""
+    model_cls = CourseRun
+    param_keys = {'course_run_title', 'course_run_key'}
+
+    @classmethod
+    def calculate_params(cls, **kwargs):
+        params = {}
+        if 'course_run_title' in kwargs:
+            params['title__contains'] = kwargs['course_run_title']
+        if 'course_run_key' in kwargs:
+            params['edx_course_key__contains'] = kwargs['course_run_key']
         return params
 
 
@@ -367,7 +391,13 @@ def update_fake_course_run_edx_key(user, course_run):
     short_month = month[:3]
     course_run.edx_course_key = re.sub(r'\w{3}_\d{4}$', '{}_{}'.format(short_month, year), course_run.edx_course_key)
     course_run.title = re.sub(r'\w+ \d{4}$', '{} {}'.format(month, year), course_run.title)
-    course_run.save()
+    try:
+        course_run.save()
+    except IntegrityError:
+        # If another course run already has this edx key, just tack on the pk to the end
+        course_run.edx_course_key = '{}({})'.format(course_run.edx_course_key, course_run.pk)
+        course_run.title = '{} ({})'.format(course_run.title, course_run.pk)
+        course_run.save()
     update_cached_edx_data_for_run(user, course_run)
     return course_run
 
