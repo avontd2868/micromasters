@@ -6,6 +6,7 @@ import {
   boundTextField,
   boundRadioGroupField,
   boundCheckbox,
+  boundTelephoneInput,
 } from './profile_edit';
 
 export default class ProfileFormFields extends React.Component {

@@ -5,6 +5,7 @@ import TextField from 'material-ui/TextField';
 import { RadioButton, RadioButtonGroup } from 'material-ui/RadioButton';
 import Checkbox from 'material-ui/Checkbox';
 import R from 'ramda';
+import ReactTelInput from 'react-telephone-input';
 
 import DateField from '../components/inputs/DateField';
 import { validationErrorSelector, classify } from './util';
@@ -218,6 +219,12 @@ export function boundCheckbox(keySet: string[], label: string|React$Element<*>):
     </div>
   );
 }
+
+export const boundTelephoneInput = (keySet: string[]): React$Element<*> => {
+  return <ReactTelInput
+    onChange={console.log}
+  />;
+};
 
 /**
  * Validates the profile then PATCHes the profile if validation succeeded.
