@@ -7,7 +7,7 @@ matrix:
       - env | grep TRAVIS > .env
       - env | grep CI >> .env
       - docker-compose -f travis-docker-compose.yml build
-      script: docker-compose -f travis-docker-compose.yml run web tox
+      script: docker-compose -f travis-docker-compose.yml up celery & docker-compose -f travis-docker-compose.yml run web tox
       services:
         - docker
       env:
