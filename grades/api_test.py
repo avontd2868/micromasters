@@ -157,22 +157,24 @@ class GradeAPITests(ESTestCase):
         """
         tests for get_users_final_grade_freeze function
         """
-        assert list(api.get_users_final_grade_freeze(self.course_run1)) == [self.user]
+        assert [user.pk for user in api.get_users_final_grade_freeze(self.course_run1)] == [self.user.pk]
 
         # create another user and enrollment
         other_user = UserFactory.create()
         CachedEnrollmentFactory.create(user=other_user, course_run=self.course_run1)
-        assert list(api.get_users_final_grade_freeze(self.course_run1)) == [self.user, other_user]
+        assert sorted([user.pk for user in
+                       api.get_users_final_grade_freeze(self.course_run1)]) == sorted([self.user.pk, other_user.pk])
 
         # add the user to the FinalGrade model as in progress
         fg_status = FinalGrade.objects.create(
             user=other_user, course_run=self.course_run1, status=FinalGradeStatus.PENDING, grade=0.0)
-        assert list(api.get_users_final_grade_freeze(self.course_run1)) == [self.user, other_user]
+        assert sorted([user.pk for user in
+                       api.get_users_final_grade_freeze(self.course_run1)]) == sorted([self.user.pk, other_user.pk])
 
         # change the final grade status to complete
         fg_status.status = FinalGradeStatus.COMPLETE
         fg_status.save()
-        assert list(api.get_users_final_grade_freeze(self.course_run1)) == [self.user]
+        assert [user.pk for user in api.get_users_final_grade_freeze(self.course_run1)] == [self.user.pk]
 
     @patch('grades.api.get_final_grade', autospec=True)
     @patch('grades.api._refresh_cache_final_grade', autospec=True)
