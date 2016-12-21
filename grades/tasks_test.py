@@ -2,7 +2,7 @@
 Tests for grades tasks
 """
 from datetime import datetime, timedelta
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 import pytz
 from django.core.cache import cache
@@ -17,7 +17,6 @@ from grades.models import (
 )
 from micromasters.factories import UserFactory
 from search.base import ESTestCase
-from micromasters.utils import chunks
 
 
 # pylint: disable=no-self-use, protected-access
