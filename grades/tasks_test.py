@@ -107,21 +107,19 @@ class GradeTasksTests(ESTestCase):
         assert info_run.course_run == self.course_run2
         assert info_run.status == FinalGradeStatus.COMPLETE
 
-    def test_freeze_course_run_final_grades_4(self):
+    @patch('grades.api.freeze_user_final_grade', autospec=True)
+    def test_freeze_course_run_final_grades_4(self, freeze_single_user):
         """
         Test for the test_freeze_course_run_final_grades
         task in case there are users to be processed
-        """
-        class PickableMock(MagicMock):
-            """Subclass of MagicMock to be used for celery tasks"""
-            def __reduce__(self):
-                return (MagicMock, ())
 
+        NOTE: In this test it is moched a function in a subtask and not the subtask.
+        The reason is because mocking subtasks inside celery groups creates problems.
+        """
         # first call
         run_grade_info_qset = FinalGradeRunInfo.objects.filter(course_run=self.course_run1)
         assert run_grade_info_qset.exists() is False
-        with patch('grades.tasks.freeze_users_final_grade_async', new_callable=PickableMock) as freeze_task:
-            tasks.freeze_course_run_final_grades.delay(self.course_run1)
+        tasks.freeze_course_run_final_grades.delay(self.course_run1)
         assert run_grade_info_qset.exists() is True
         info_run = run_grade_info_qset.first()
         assert info_run.course_run == self.course_run1
@@ -129,9 +127,9 @@ class GradeTasksTests(ESTestCase):
         cache_id = tasks.CACHE_ID_BASE_STR.format(self.course_run1.edx_course_key)
         cached_celery_task_id_1 = cache.get(cache_id)
         assert cached_celery_task_id_1 is not None
-        assert freeze_task.s.call_count == 2
-        for group in chunks(self.users, 20):
-            freeze_task.s.assert_any_call(group, self.course_run1)
+        assert freeze_single_user.call_count == len(self.users)
+        for user in self.users:
+            freeze_single_user.assert_any_call(user, self.course_run1)
 
         # simulate successful freeze for most users
         successful_users = self.users[5:]
@@ -144,12 +142,33 @@ class GradeTasksTests(ESTestCase):
                 status=FinalGradeStatus.COMPLETE
             )
 
-        # new call will process all the remaining users
-        with patch('grades.tasks.freeze_users_final_grade_async', new_callable=PickableMock) as freeze_task:
-            tasks.freeze_course_run_final_grades.delay(self.course_run1)
+        # new call will process all the remaining users without changing the status of the course run
+        freeze_single_user.reset_mock()
+        tasks.freeze_course_run_final_grades.delay(self.course_run1)
         info_run.refresh_from_db()
         assert info_run.status == FinalGradeStatus.PENDING
         cached_celery_task_id_2 = cache.get(cache_id)
         assert cached_celery_task_id_2 is not None
         assert cached_celery_task_id_2 != cached_celery_task_id_1
-        freeze_task.s.assert_called_once_with(self.users[:5], self.course_run1)
+        remaining_users = self.users[:5]
+        assert freeze_single_user.call_count == len(remaining_users)
+        for user in remaining_users:
+            freeze_single_user.assert_any_call(user, self.course_run1)
+
+        # simulate successful freeze for remaining users users
+        for user in remaining_users:
+            FinalGrade.objects.create(
+                user=user,
+                grade=0.6,
+                passed=True,
+                course_run=self.course_run1,
+                status=FinalGradeStatus.COMPLETE
+            )
+
+        # a new call will just change the status of the course and clean up the cache
+        freeze_single_user.reset_mock()
+        tasks.freeze_course_run_final_grades.delay(self.course_run1)
+        info_run.refresh_from_db()
+        assert info_run.status == FinalGradeStatus.COMPLETE
+        assert cache.get(cache_id) is None
+        assert freeze_single_user.call_count == 0
