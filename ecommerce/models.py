@@ -154,3 +154,53 @@ class CoursePrice(Model):
     def __str__(self):
         """Description for CoursePrice"""
         return "CoursePrice for {}, price={}, is_valid={}".format(self.course_run, self.price, self.is_valid)
+
+
+class Coupon(Model):
+    """
+    Model for coupons representing discounts on purchases
+    """
+    CREATED = 'created'
+    USED = 'used'
+    DELETED = 'deleted'
+    STATUSES = [CREATED, USED, DELETED]
+
+    PERCENT_DISCOUNT = 'percent-discount'
+    FIXED_DISCOUNT = 'fixed-discount'
+
+    AMOUNT_TYPES = [PERCENT_DISCOUNT, FIXED_DISCOUNT]
+
+    COURSE_RUN = 'course-run'
+    COURSE = 'course'
+    PROGRAM = 'program'
+    PRODUCT_TYPES = [PROGRAM, COURSE, COURSE_RUN]
+
+    order = ForeignKey(Order, null=True)
+    status = CharField(
+        choices=[(status, status) for status in STATUSES],
+        max_length=30,
+    )
+    amount_type = CharField(
+        choices=[(type, type) for type in AMOUNT_TYPES],
+        max_length=30,
+    )
+    product_type = CharField(
+        choices=[(type, type) for type in PRODUCT_TYPES],
+        max_length=30,
+    )
+    # Either a number from 0 to 1 representing a percent, or a fixed value for discount
+    amount = DecimalField(decimal_places=2, max_digits=20)
+    expiration_date = DateTimeField(null=True)
+
+    def __str__(self):
+        """Description for Coupon"""
+        return (
+            "Coupon with product_type={product_type}, product_id={product_id},"
+            " amount_type={amount_type}, amount={amount}, order={order}".format(
+                product_type=self.product_type,
+                product_id=self.product_id,
+                amount_type=self.amount_type,
+                amount=self.amount,
+                order=self.order,
+            )
+        )
