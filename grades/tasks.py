@@ -8,10 +8,7 @@ from celery.result import GroupResult
 from django.core.cache import cache
 
 from courses.models import CourseRun
-from grades.api import (
-    freeze_user_final_grade,
-    get_users_final_grade_freeze,
-)
+from grades import api
 from grades.models import FinalGradeRunInfo
 from micromasters.celery import async
 from micromasters.utils import chunks
@@ -83,7 +80,7 @@ def freeze_course_run_final_grades(course_run):
         results.delete()
 
     # extract the users to be frozen for this course
-    users_qset = get_users_final_grade_freeze(course_run)
+    users_qset = api.get_users_final_grade_freeze(course_run)
 
     # if there are no more users to be froze, just complete the task
     if users_qset.count() == 0:
@@ -121,7 +118,7 @@ def freeze_users_final_grade_async(users, course_run):
     # pylint: disable=bare-except
     for user in users:
         try:
-            freeze_user_final_grade(user, course_run)
+            api.freeze_user_final_grade(user, course_run)
         except:
             log.exception(
                 'Impossible to freeze final grade for user "%s" in course %s',

@@ -507,8 +507,8 @@ CELERYBEAT_SCHEDULE = {
         'schedule': crontab(minute=0, hour='3')
     },
 }
-
 CELERY_TIMEZONE = 'UTC'
+CELERY_ACCEPT_CONTENT = ['json']
 
 # Elasticsearch
 ELASTICSEARCH_DEFAULT_PAGE_SIZE = get_var('ELASTICSEARCH_DEFAULT_PAGE_SIZE', 50)
