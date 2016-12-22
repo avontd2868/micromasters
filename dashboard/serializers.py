@@ -1,6 +1,7 @@
 """
 Provides functionality for serializing a ProgramEnrollment for the ES index
 """
+from courses.utils import get_year_season_from_course_run
 from dashboard.api_edx_cache import CachedEdxUserData
 from dashboard.models import CachedEnrollment
 from dashboard.utils import MMTrack
@@ -38,6 +39,24 @@ class UserProgramSearchSerializer:
         return serialized_enrollments
 
     @classmethod
+    def serialize_semester_enrollments(cls, enrollments):
+        """
+        Serializes the semesters that a user is enrolled in
+
+        Args:
+            enrollments (iterable): An iterable of CachedEnrollments
+        Returns:
+            list: Serialized semester enrollments
+        """
+        semester_values = set()
+        for enrollment in enrollments:
+            year_season_tuple = get_year_season_from_course_run(enrollment.course_run)
+            semester_values.add(
+                '{} - {}'.format(year_season_tuple[0], year_season_tuple[1])
+            )
+        return [{'semester': semester_value} for semester_value in semester_values]
+
+    @classmethod
     def serialize(cls, program_enrollment):
         """
         Serializes a ProgramEnrollment object
@@ -56,6 +75,7 @@ class UserProgramSearchSerializer:
         return {
             'id': program.id,
             'enrollments': cls.serialize_enrollments(mmtrack, enrollments_qset),
+            'semester_enrollments': cls.serialize_semester_enrollments(enrollments_qset),
             'grade_average': mmtrack.calculate_final_grade_average(),
             'is_learner': is_learner(user, program),
             'email_optin': user.profile.email_optin,

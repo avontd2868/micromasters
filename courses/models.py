@@ -4,7 +4,6 @@ Models for course structure
 import logging
 from datetime import datetime
 import urllib.parse
-
 import pytz
 from django.core.exceptions import ImproperlyConfigured
 from django.db import models

@@ -256,6 +256,9 @@ def program_enrolled_user_mapping():
             'ancestors': NOT_ANALYZED_STRING_TYPE,
             'value': NOT_ANALYZED_STRING_TYPE,
             'order': LONG_TYPE
+        }},
+        'semester_enrollments': {'type': 'nested', 'properties': {
+            'semester': NOT_ANALYZED_STRING_TYPE
         }}
     })
     # Make strings not_analyzed by default

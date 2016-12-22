@@ -17,11 +17,13 @@ import {
 import Grid, { Cell } from 'react-mdl/lib/Grid';
 import Card from 'react-mdl/lib/Card/Card';
 import iso3166 from 'iso-3166-2';
+import R from 'ramda';
 import _ from 'lodash';
 
 import ProgramFilter from './ProgramFilter';
 import LearnerResult from './search/LearnerResult';
 import CountryRefinementOption from './search/CountryRefinementOption';
+import PatchedMenuFilter from './search/PatchedMenuFilter';
 import CustomPaginationDisplay from './search/CustomPaginationDisplay';
 import CustomResetFiltersDisplay from './search/CustomResetFiltersDisplay';
 import CustomSortingSelect from './search/CustomSortingSelect';
@@ -41,9 +43,26 @@ const makeSearchkitTranslations: () => Object = () => {
       translations[stateCode] = iso3166.data[code].sub[stateCode].name;
     }
   }
-
   return translations;
 };
+
+const SEMESTER_SEASON_NUMBER_VALUE = {
+  'Spring': '1',
+  'Summer': '2',
+  'Fall': '3'
+};
+
+// Produces a descending date-ordered list from bucket values like '2016 - Fall'
+const sortSemesterBuckets = R.compose(
+  R.reverse,
+  R.sortBy(
+    // '2016 - Fall' -> '20163', '2016 - Spring' -> '20161'
+    R.compose(
+      yearSeasonArr => `${yearSeasonArr[0]}${SEMESTER_SEASON_NUMBER_VALUE[yearSeasonArr[1]]}`,
+      R.split(/[^\w]+/),
+      R.prop('key')
+    ))
+);
 
 const sortOptions = [
   {
@@ -137,7 +156,7 @@ export default class LearnerSearch extends SearchkitComponent {
         </Cell>
         <Cell col={12} className="mm-filters">
           <SelectedFilters />
-          <ResetFilters component={CustomResetFiltersDisplay}/>
+          <ResetFilters component={CustomResetFiltersDisplay} />
         </Cell>
       </Grid>
     );
@@ -164,6 +183,18 @@ export default class LearnerSearch extends SearchkitComponent {
             field={"program.enrollments"}
             title="Course"
             id="courses"
+          />
+        </FilterVisibilityToggle>
+        <FilterVisibilityToggle
+          {...this.props}
+          filterName="semester"
+        >
+          <PatchedMenuFilter
+            field="program.semester_enrollments.semester"
+            fieldOptions={{ type: 'nested', options: {path: 'program.semester_enrollments'} }}
+            title="Semester"
+            id="semester"
+            bucketsTransform={sortSemesterBuckets}
           />
         </FilterVisibilityToggle>
         <FilterVisibilityToggle
