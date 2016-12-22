@@ -175,19 +175,10 @@ class Coupon(Model):
 
     AMOUNT_TYPES = [PERCENT_DISCOUNT, FIXED_DISCOUNT]
 
-    COURSE_RUN = 'course-run'
-    COURSE = 'course'
-    PROGRAM = 'program'
-    PRODUCT_TYPES = [PROGRAM, COURSE, COURSE_RUN]
-
     # The coupon code used for redemption by the purchaser in the user interface.
     # If blank, the purchaser may not redeem this coupon through the user interface,
     # though it may be redeemed in their name by an administrator.
     coupon_code = TextField(null=True, blank=True)
-    product_type = CharField(
-        choices=[(_type, _type) for _type in PRODUCT_TYPES],
-        max_length=30,
-    )
     # One and only one of these three foreign keys must be set to not null
     course_run = ForeignKey(CourseRun, on_delete=SET_NULL, null=True)
     course = ForeignKey(Course, on_delete=SET_NULL, null=True)
