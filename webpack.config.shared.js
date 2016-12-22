@@ -15,11 +15,6 @@ module.exports = {
     module: {
       rules: [
         {
-          test: /\.jsx?$/,
-          exclude: /node_modules/,
-          use: 'babel-loader?' + JSON.stringify(babelQuerySettings)
-        },  // to transform JSX into JS
-        {
           test: /\.(svg|ttf|woff|woff2|eot|gif)$/,
           use: 'url-loader'
         },
