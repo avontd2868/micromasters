@@ -22,7 +22,11 @@ from django.db.models.fields.related import (
     ForeignKey,
 )
 
-from courses.models import CourseRun
+from courses.models import (
+    CourseRun,
+    Course,
+    Program,
+)
 from ecommerce.exceptions import EcommerceModelException
 from micromasters.models import (
     AuditableModel,
@@ -184,7 +188,11 @@ class Coupon(Model):
         choices=[(_type, _type) for _type in PRODUCT_TYPES],
         max_length=30,
     )
-    product_id = IntegerField(null=False)
+    # One and only one of these three foreign keys must be set to not null
+    course_run = ForeignKey(CourseRun, on_delete=SET_NULL, null=True)
+    course = ForeignKey(Course, on_delete=SET_NULL, null=True)
+    program = ForeignKey(Program, on_delete=SET_NULL, null=True)
+
     # percent or fixed discount
     amount_type = CharField(
         choices=[(_type, _type) for _type in AMOUNT_TYPES],
@@ -204,11 +212,11 @@ class Coupon(Model):
 
     def __str__(self):
         """Description for Coupon"""
-        return "Coupon {amount_type} {amount} for {product_type} {product_id}, {num_coupons_available} left".format(
+        product = self.course_run or self.course or self.program
+        return "Coupon {amount_type} {amount} for {product}, {num_coupons_available} left".format(
             amount_type=self.amount_type,
             amount=self.amount,
-            product_type=self.product_type,
-            product_id=self.product_id,
+            product=product,
             num_coupons_available=self.num_coupons_available,
         )
 
@@ -217,8 +225,8 @@ class UserCoupon(Model):
     """
     Model for uses of a coupon by a user.
     """
-    coupon = ForeignKey(Coupon, on_delete=SET_NULL)
-    user = ForeignKey(settings.AUTH_USER_MODEL, on_delete=SET_NULL)
+    coupon = ForeignKey(Coupon, on_delete=SET_NULL, null=True)
+    user = ForeignKey(settings.AUTH_USER_MODEL, on_delete=SET_NULL, null=True)
 
     # Number of times left the user can use the coupon in a purchase
     available_redemptions = IntegerField()
@@ -238,8 +246,8 @@ class RedeemedCoupon(Model):
     """
     Model for coupon which has been used in a purchase by a user.
     """
-    order = ForeignKey(Order, on_delete=SET_NULL)
-    coupon = ForeignKey(Coupon, on_delete=SET_NULL)
+    order = ForeignKey(Order, on_delete=SET_NULL, null=True)
+    coupon = ForeignKey(Coupon, on_delete=SET_NULL, null=True)
 
     class Meta:
         unique_together = ('order', 'coupon',)

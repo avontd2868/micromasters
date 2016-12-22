@@ -5,11 +5,14 @@ Admin views for ecommerce models
 from django.contrib import admin
 
 from ecommerce.models import (
+    Coupon,
     CoursePrice,
     Line,
     Order,
     OrderAudit,
     Receipt,
+    RedeemedCoupon,
+    UserCoupon,
 )
 from micromasters.utils import get_field_names
 
@@ -75,8 +78,29 @@ class ReceiptAdmin(admin.ModelAdmin):
         return False
 
 
+class CouponAdmin(admin.ModelAdmin):
+    """Admin for Coupon"""
+    model = Coupon
+    readonly_fields = get_field_names(Coupon)
+
+
+class UserCouponAdmin(admin.ModelAdmin):
+    """Admin for UserCoupon"""
+    model = UserCoupon
+    readonly_fields = get_field_names(UserCoupon)
+
+
+class RedeemedCouponAdmin(admin.ModelAdmin):
+    """Admin for RedeemedCoupon"""
+    model = RedeemedCoupon
+    readonly_fields = get_field_names(RedeemedCoupon)
+
+
+admin.site.register(Coupon, CouponAdmin)
 admin.site.register(CoursePrice, CoursePriceAdmin)
 admin.site.register(Line, LineAdmin)
 admin.site.register(Order, OrderAdmin)
 admin.site.register(OrderAudit, OrderAuditAdmin)
+admin.site.register(RedeemedCoupon, RedeemedCouponAdmin)
 admin.site.register(Receipt, ReceiptAdmin)
+admin.site.register(UserCoupon, UserCouponAdmin)
