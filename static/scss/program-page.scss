@@ -271,7 +271,25 @@
         position: relative;
         padding-left: 32px;
       }
+      a.pilcrow {
+        opacity: 0; /* to hide the element */
+        -webkit-transition: opacity 0.2s linear;
+        -moz-transition: opacity 0.2s linear;
+        -ms-transition: opacity 0.2s linear;
+        -o-transition: opacity 0.2s linear;
+        transition: opacity 0.2s linear;
+        text-decoration: none;
+      }
+
     }
+    .faq:hover a.pilcrow{
+      opacity: 1; /* to reveal the element */
+      -webkit-transition: opacity 0.2s linear;
+      -moz-transition: opacity 0.2s linear;
+      -ms-transition: opacity 0.2s linear;
+      -o-transition: opacity 0.2s linear;
+      transition: opacity 0.2s linear;
+      }
   }
 
 
