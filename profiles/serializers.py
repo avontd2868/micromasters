@@ -237,6 +237,7 @@ class ProfileLimitedSerializer(ProfileBaseSerializer):
             'work_history',
             'edx_level_of_education',
             'education',
+            'image',
             'about_me'
         )
         read_only_fields = ('edx_level_of_education', 'agreed_to_terms_of_service',)
