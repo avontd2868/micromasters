@@ -902,7 +902,7 @@ describe("UserPage", function() {
         });
       });
 
-      it('should let you edit personal info', () => {
+      it.only('should let you edit personal info', () => {
         const username = SETTINGS.user.username;
         const newFirstName = "New name";
         let expectedProfile = {
@@ -919,6 +919,7 @@ describe("UserPage", function() {
           return listenForActions([
             SET_USER_PAGE_DIALOG_VISIBILITY,
             START_PROFILE_EDIT,
+            UPDATE_PROFILE,
           ], () => {
             personalButton.simulate('click');
           }).then(() => {
