@@ -4,6 +4,7 @@ Tasks for exams
 from datetime import datetime
 import tempfile
 
+from django.db import transaction
 import pytz
 
 from exams.models import ExamProfile
@@ -23,17 +24,16 @@ def export_exam_profiles():
                      .filter(status=ExamProfile.PROFILE_PENDING)
                      .select_related('profile'))
     file_prefix = datetime.now(pytz.utc).strftime('cdd-%Y%m%d%H_')
-    valid_profiles, invalid_profiles = [], []
 
     # write the file out locally
-    # this will be written out to a file like: /tmp/ccd-20160405_kjfiamdf.dat
+    # this will be written out to a file like: /tmp/cdd-20160405_kjfiamdf.dat
     with tempfile.NamedTemporaryFile(
         prefix=file_prefix,
         encoding='utf-8',
         suffix='.dat',
         mode='w',
     ) as tsv:
-        valid_profiles, invalid_profiles = write_cdd_file(exam_profiles, tsv)
+        valid_profiles, invalid_profiles = write_cdd_file(tsv, exam_profiles)
 
         # flush data to disk before upload
         tsv.flush()
@@ -41,16 +41,17 @@ def export_exam_profiles():
         # upload to SFTP server
         upload_tsv(tsv.name)
 
-    # update records to reflect the successful upload
-    if valid_profiles:
-        exam_profile_ids = [exam_profile.id for exam_profile in valid_profiles]
-        (ExamProfile.objects
-         .filter(id__in=exam_profile_ids)
-         .update(status=ExamProfile.PROFILE_IN_PROGRESS))
+    with transaction.atomic():
+        # update records to reflect the successful upload
+        if valid_profiles:
+            exam_profile_ids = [exam_profile.id for exam_profile in valid_profiles]
+            (ExamProfile.objects
+             .filter(id__in=exam_profile_ids)
+             .update(status=ExamProfile.PROFILE_IN_PROGRESS))
 
-    # update records to reflect invalid profile
-    if invalid_profiles:
-        exam_profile_ids = [exam_profile.id for exam_profile in invalid_profiles]
-        (ExamProfile.objects
-         .filter(id__in=exam_profile_ids)
-         .update(status=ExamProfile.PROFILE_INVALID))
+        # update records to reflect invalid profile
+        if invalid_profiles:
+            exam_profile_ids = [exam_profile.id for exam_profile in invalid_profiles]
+            (ExamProfile.objects
+             .filter(id__in=exam_profile_ids)
+             .update(status=ExamProfile.PROFILE_INVALID))

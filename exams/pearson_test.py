@@ -76,7 +76,7 @@ class PearsonTest(TestCase):
 
     def test_write_cdd_file(self):  # pylint: disable=no-self-use
         """
-        Tests ccd_writer against a set of profiles
+        Tests cdd_writer against a set of profiles
         """
         file = io.StringIO()
 
@@ -115,7 +115,7 @@ class PearsonTest(TestCase):
 
     def test_write_cdd_file_skips_invalid_state(self):  # pylint: disable=no-self-use
         """
-        Tests write_cdd_file against a profiel with invalid state
+        Tests write_cdd_file against a profile with invalid state
         """
         file = io.StringIO()
 
@@ -163,9 +163,9 @@ class PearsonTest(TestCase):
             ftp_mock.cd.assert_called_once_with(EXAMS_SFTP_UPLOAD_DIR)
             ftp_mock.put.assert_called_once_with(FILENAME)
 
-    def test_upload_tsv_raise_improperly_configured(self):  # pylint: disable=no-self-use
+    def test_upload_tsv_fails_if_sftp_host_not_set(self):  # pylint: disable=no-self-use
         """
-        Tests that upload raises ImproperlyConfigured if setting is missing
+        Tests that upload raises ImproperlyConfigured if settings.EXAMS_SFTP_HOST is not set
         """
 
         with self.settings(
@@ -177,6 +177,11 @@ class PearsonTest(TestCase):
                 upload_tsv('file.tsv')
                 connection_mock.assert_not_called()
 
+    def test_upload_tsv_fails_if_sftp_port_not_set(self):  # pylint: disable=no-self-use
+        """
+        Tests that upload raises ImproperlyConfigured if settings.EXAMS_SFTP_PORT is not set
+        """
+
         with self.settings(
             EXAMS_SFTP_PORT=None,
         ), patch('pysftp.Connection') as connection_mock:
@@ -185,6 +190,11 @@ class PearsonTest(TestCase):
             with self.assertRaises(ImproperlyConfigured):
                 upload_tsv('file.tsv')
                 connection_mock.assert_not_called()
+
+    def test_upload_tsv_fails_if_sftp_username_not_set(self):  # pylint: disable=no-self-use
+        """
+        Tests that upload raises ImproperlyConfigured if settings.EXAMS_SFTP_USERNAME is not set
+        """
 
         with self.settings(
             EXAMS_SFTP_USERNAME=None,
@@ -195,6 +205,11 @@ class PearsonTest(TestCase):
                 upload_tsv('file.tsv')
                 connection_mock.assert_not_called()
 
+    def test_upload_tsv_fails_if_sftp_password_not_set(self):  # pylint: disable=no-self-use
+        """
+        Tests that upload raises ImproperlyConfigured if settings.EXAMS_SFTP_PASSWORD is not set
+        """
+
         with self.settings(
             EXAMS_SFTP_PASSWORD=None,
         ), patch('pysftp.Connection') as connection_mock:
@@ -203,6 +218,11 @@ class PearsonTest(TestCase):
             with self.assertRaises(ImproperlyConfigured):
                 upload_tsv('file.tsv')
                 connection_mock.assert_not_called()
+
+    def test_upload_tsv_fails_if_sftp_upload_dir_not_set(self):  # pylint: disable=no-self-use
+        """
+        Tests that upload raises ImproperlyConfigured if settings.EXAMS_SFTP_UPLOAD_DIR is not set
+        """
 
         with self.settings(
             EXAMS_SFTP_UPLOAD_DIR=None,
