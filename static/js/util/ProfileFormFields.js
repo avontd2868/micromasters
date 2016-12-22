@@ -18,6 +18,7 @@ export default class ProfileFormFields extends React.Component {
     this.boundDateField = boundDateField.bind(this);
     this.boundRadioGroupField = boundRadioGroupField.bind(this);
     this.boundCheckbox = boundCheckbox.bind(this);
+    this.boundTelephoneInput = boundTelephoneInput.bind(this);
   }
   
   // type declarations
