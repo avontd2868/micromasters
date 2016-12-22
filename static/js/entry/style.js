@@ -18,5 +18,8 @@ import 'style!css!slick-carousel/slick/slick-theme.css';
 // react-datepicker styles
 import 'style!css!react-datepicker/dist/react-datepicker.css';
 
+// react-telephone-input stylesheet
+import 'style!css!react-telephone-input/css/default.css';
+
 // This should come last to override other styles
 import '../../scss/layout.scss';

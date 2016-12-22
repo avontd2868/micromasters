@@ -5,7 +5,7 @@ import TextField from 'material-ui/TextField';
 import { RadioButton, RadioButtonGroup } from 'material-ui/RadioButton';
 import Checkbox from 'material-ui/Checkbox';
 import R from 'ramda';
-import { ReactTelInput } from 'react-telephone-input';
+import ReactTelInput from 'react-telephone-input';
 
 import DateField from '../components/inputs/DateField';
 import { validationErrorSelector, classify } from './util';
@@ -222,6 +222,7 @@ export function boundCheckbox(keySet: string[], label: string|React$Element<*>):
 
 export const boundTelephoneInput = (keySet: string[]): React$Element<*> => {
   return <ReactTelInput
+    flagsImagePath='/static/images/flags.png'
     onChange={console.log}
   />;
 };
