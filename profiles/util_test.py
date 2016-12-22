@@ -1,17 +1,33 @@
 """
 Tests for util functions
 """
-
 from unittest import TestCase
+import pytest
+from django.db.models.signals import post_save
+from factory.django import mute_signals
 
+from backends.edxorg import EdxOrgOAuth2
 from profiles import util
+from profiles.factories import ProfileFactory
 
 
 # pylint: disable=no-self-use
+@pytest.mark.django_db
 class UtilTests(TestCase):
     """
     Tests for util functions
     """
+    def create_profile(self, **kwargs):
+        """
+        Create a profile and social auth
+        """
+        with mute_signals(post_save):
+            profile = ProfileFactory.create(**kwargs)
+            profile.user.social_auth.create(
+                provider=EdxOrgOAuth2.name,
+                uid="{}_edx".format(profile.user.username)
+            )
+            return profile
 
     def test_split_name_none(self):
         """
@@ -60,3 +76,30 @@ class UtilTests(TestCase):
 
         too_long_url = '{}.jpg'.format('a' * 150)
         assert len(util.profile_image_upload_uri(None, too_long_url)) == 100
+
+    def test_full_name(self):
+        """
+        test full name of user on given profile.
+        """
+        first = "Tester"
+        last = "KK"
+        profile = self.create_profile(first_name=first, last_name=last)
+        assert util.full_name(profile) == "{} {}".format(first, last)
+
+    def test_full_name_when_last_name_empty(self):
+        """
+        Test full name when last name is set empty on profile.
+        """
+        first = "Tester"
+        last = ""
+        profile = self.create_profile(first_name=first, last_name=last)
+        assert util.full_name(profile) == first
+
+    def test_full_name_when_first_name_empty(self):
+        """
+        Test full name when first name is set empty on profile.
+        """
+        first = ""
+        last = "Tester"
+        profile = self.create_profile(first_name=first, last_name=last)
+        assert util.full_name(profile) == "{} {}".format(profile.user.username, last)
