@@ -3,6 +3,7 @@ Models for storing ecommerce data
 """
 from django.contrib.auth.models import User
 from django.contrib.postgres.fields import JSONField
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import (
@@ -14,6 +15,7 @@ from django.db.models.fields import (
     CharField,
     DateTimeField,
     DecimalField,
+    IntegerField,
     TextField,
 )
 from django.db.models.fields.related import (
@@ -158,13 +160,8 @@ class CoursePrice(Model):
 
 class Coupon(Model):
     """
-    Model for coupons representing discounts on purchases
+    Model for coupons which have not yet been assigned
     """
-    CREATED = 'created'
-    USED = 'used'
-    DELETED = 'deleted'
-    STATUSES = [CREATED, USED, DELETED]
-
     PERCENT_DISCOUNT = 'percent-discount'
     FIXED_DISCOUNT = 'fixed-discount'
 
@@ -175,32 +172,50 @@ class Coupon(Model):
     PROGRAM = 'program'
     PRODUCT_TYPES = [PROGRAM, COURSE, COURSE_RUN]
 
-    order = ForeignKey(Order, null=True)
-    status = CharField(
-        choices=[(status, status) for status in STATUSES],
-        max_length=30,
-    )
-    amount_type = CharField(
-        choices=[(_type, _type) for _type in AMOUNT_TYPES],
-        max_length=30,
-    )
+    product_id = IntegerField(null=False)
     product_type = CharField(
         choices=[(_type, _type) for _type in PRODUCT_TYPES],
         max_length=30,
     )
     # Either a number from 0 to 1 representing a percent, or a fixed value for discount
     amount = DecimalField(decimal_places=2, max_digits=20)
+    amount_type = CharField(
+        choices=[(_type, _type) for _type in AMOUNT_TYPES],
+        max_length=30,
+    )
+
+    # Number of unassigned coupons of this type
+    num_coupons_available = IntegerField(null=False)
+    num_uses = IntegerField(null=False)
     expiration_date = DateTimeField(null=True)
 
     def __str__(self):
         """Description for Coupon"""
-        return (
-            "Coupon with product_type={product_type}, product_id={product_id},"
-            " amount_type={amount_type}, amount={amount}, order={order}".format(
-                product_type=self.product_type,
-                product_id=self.product_id,
-                amount_type=self.amount_type,
-                amount=self.amount,
-                order=self.order,
-            )
+        return "Coupon {amount_type} {amount} for {product_type} {product_id}, {count} left".format(
+            amount_type=self.amount_type,
+            amount=self.amount,
+            product_type=self.product_type,
+            product_id=self.product_id,
+            count=self.num_coupons_available,
         )
+
+
+class UserCoupon(Model):
+    """
+    Model for uses of a 
+    """
+    coupon = ForeignKey(Coupon, on_delete=SET_NULL)
+    user = ForeignKey(settings.AUTH_USER_MODEL)
+
+    def __str__(self):
+        """Description for UserCoupon"""
+
+
+class RedeemedCoupon(Model):
+    """
+    Model for coupon which has been used by a purchaser
+    """
+    order = ForeignKey(Order, on_delete=SET_NULL)
+
+    def __str__(self):
+        """Description for RedeemedCoupon"""
