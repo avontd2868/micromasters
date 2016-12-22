@@ -72,7 +72,7 @@ const personalMessages: ErrorMessages = {
   'birth_country': "Country is required",
   'nationality': "Nationality is required",
   'date_of_birth': 'Please enter a valid date of birth',
-  'phone_number': 'Please enter a valid phone number',
+  'phone_number': 'A phone number is required',
 };
 
 export const personalValidation = (profile: Profile) => {
@@ -84,7 +84,7 @@ export const personalValidation = (profile: Profile) => {
   if ( profile.phone_number ) {
     let number = new PhoneNumber(profile.phone_number);
     if ( ! number.isValid() ) {
-      errors.phone_number = personalMessages.phone_number;
+      errors.phone_number = 'Please enter a valid phone number';
     }
   }
   return errors;
