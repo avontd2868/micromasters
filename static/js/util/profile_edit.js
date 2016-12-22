@@ -222,17 +222,20 @@ export function boundCheckbox(keySet: string[], label: string|React$Element<*>):
 
 const onTelChange = R.curry((
   keySet,
+  countryKeySet,
   profile,
   updateProfile,
   validator,
   newPhoneNumber,
+  countryObj
 ) => {
   let clone = _.cloneDeep(profile);
   _.set(clone, keySet, newPhoneNumber);
+  _.set(clone, countryKeySet, countryObj.iso2);
   updateProfile(clone, validator);
 });
 
-export function boundTelephoneInput(keySet: string[]): React$Element<*> {
+export function boundTelephoneInput(keySet: string[], countryKeySet: string[]): React$Element<*> {
   const {
     profile,
     errors,
@@ -253,7 +256,7 @@ export function boundTelephoneInput(keySet: string[]): React$Element<*> {
       <ReactTelInput
         defaultCountry={currentCountry}
         flagsImagePath='/static/images/flags.png'
-        onChange={onTelChange(keySet, profile, updateProfile, validator)}
+        onChange={onTelChange(keySet, countryKeySet, profile, updateProfile, validator)}
         onBlur={onBlur}
         value={_.get(profile, keySet)}
       />

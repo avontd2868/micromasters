@@ -132,7 +132,7 @@ export default class PersonalForm extends ProfileFormFields {
         </section>
         <section>
           <h3>Telephone</h3>
-          { this.boundTelephoneInput(['phone_number']) }
+          { this.boundTelephoneInput(['phone_number'], ['phone_country_code']) }
         </section>
       </section>
     );
