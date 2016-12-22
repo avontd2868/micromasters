@@ -220,12 +220,49 @@ export function boundCheckbox(keySet: string[], label: string|React$Element<*>):
   );
 }
 
-export const boundTelephoneInput = (keySet: string[]): React$Element<*> => {
-  return <ReactTelInput
-    flagsImagePath='/static/images/flags.png'
-    onChange={console.log}
-  />;
-};
+const onTelChange = R.curry((
+  keySet,
+  profile,
+  updateProfile,
+  validator,
+  newPhoneNumber,
+) => {
+  let clone = _.cloneDeep(profile);
+  _.set(clone, keySet, newPhoneNumber);
+  updateProfile(clone, validator);
+});
+
+export function boundTelephoneInput(keySet: string[]): React$Element<*> {
+  const {
+    profile,
+    errors,
+    updateProfile,
+    validator,
+    updateProfileValidation,
+    updateValidationVisibility,
+  } = this.props;
+
+  let onBlur = () => {
+    updateValidationVisibility(keySet);
+    updateProfileValidation(profile, validator);
+  };
+
+  let currentCountry = R.toLower(R.defaultTo("", _.get(profile,  ['country'])));
+  return (
+    <div className={`bound-telephone ${validationErrorSelector(errors, keySet)}`}>
+      <ReactTelInput
+        defaultCountry={currentCountry}
+        flagsImagePath='/static/images/flags.png'
+        onChange={onTelChange(keySet, profile, updateProfile, validator)}
+        onBlur={onBlur}
+        value={_.get(profile, keySet)}
+      />
+      <span className="validation-error-text">
+        {_.get(errors, keySet)}
+      </span>
+    </div>
+  );
+}
 
 /**
  * Validates the profile then PATCHes the profile if validation succeeded.
