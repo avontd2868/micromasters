@@ -160,7 +160,11 @@ class CoursePrice(Model):
 
 class Coupon(Model):
     """
-    Model for coupons which have not yet been assigned
+    Model for a coupon. This stores the discount for the coupon, how many people can use it, and how many times
+    a person can use it.
+
+    When a coupon is redeemed by a purchaser the counter on this object is decremented
+    and a UserCoupon object is created for that particular purchaser.
     """
     PERCENT_DISCOUNT = 'percent-discount'
     FIXED_DISCOUNT = 'fixed-discount'
@@ -172,50 +176,77 @@ class Coupon(Model):
     PROGRAM = 'program'
     PRODUCT_TYPES = [PROGRAM, COURSE, COURSE_RUN]
 
-    product_id = IntegerField(null=False)
+    # The coupon code used for redemption by the purchaser in the user interface.
+    # If blank, the purchaser may not redeem this coupon through the user interface,
+    # though it may be redeemed in their name by an administrator.
+    coupon_code = TextField(null=True, blank=True)
     product_type = CharField(
         choices=[(_type, _type) for _type in PRODUCT_TYPES],
         max_length=30,
     )
-    # Either a number from 0 to 1 representing a percent, or a fixed value for discount
-    amount = DecimalField(decimal_places=2, max_digits=20)
+    product_id = IntegerField(null=False)
+    # percent or fixed discount
     amount_type = CharField(
         choices=[(_type, _type) for _type in AMOUNT_TYPES],
         max_length=30,
     )
+    # Either a number from 0 to 1 representing a percent, or a fixed value for discount
+    amount = DecimalField(decimal_places=2, max_digits=20)
 
-    # Number of unassigned coupons of this type
+    # Number of people this coupon can be redeemed by
     num_coupons_available = IntegerField(null=False)
-    num_uses = IntegerField(null=False)
+    # Number of times a person can redeem a coupon
+    num_redemptions = IntegerField(null=False)
+    # After this time the coupons will not be redeemable
     expiration_date = DateTimeField(null=True)
+    # If true, coupons are not presently redeemable
+    disabled = BooleanField(default=False)
 
     def __str__(self):
         """Description for Coupon"""
-        return "Coupon {amount_type} {amount} for {product_type} {product_id}, {count} left".format(
+        return "Coupon {amount_type} {amount} for {product_type} {product_id}, {num_coupons_available} left".format(
             amount_type=self.amount_type,
             amount=self.amount,
             product_type=self.product_type,
             product_id=self.product_id,
-            count=self.num_coupons_available,
+            num_coupons_available=self.num_coupons_available,
         )
 
 
 class UserCoupon(Model):
     """
-    Model for uses of a 
+    Model for uses of a coupon by a user.
     """
     coupon = ForeignKey(Coupon, on_delete=SET_NULL)
-    user = ForeignKey(settings.AUTH_USER_MODEL)
+    user = ForeignKey(settings.AUTH_USER_MODEL, on_delete=SET_NULL)
+
+    # Number of times left the user can use the coupon in a purchase
+    available_redemptions = IntegerField()
+
+    class Meta:
+        unique_together = ('coupon', 'user',)
 
     def __str__(self):
         """Description for UserCoupon"""
+        return "UserCoupon for user {username} and coupon {coupon}".format(
+            username=self.user.username,
+            coupon=self.coupon,
+        )
 
 
 class RedeemedCoupon(Model):
     """
-    Model for coupon which has been used by a purchaser
+    Model for coupon which has been used in a purchase by a user.
     """
     order = ForeignKey(Order, on_delete=SET_NULL)
+    coupon = ForeignKey(Coupon, on_delete=SET_NULL)
+
+    class Meta:
+        unique_together = ('order', 'coupon',)
 
     def __str__(self):
         """Description for RedeemedCoupon"""
+        return "RedeemedCoupon for order {order}, coupon {coupon}".format(
+            order=self.order,
+            coupon=self.coupon,
+        )
