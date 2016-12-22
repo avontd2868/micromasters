@@ -181,11 +181,11 @@ class Coupon(Model):
         max_length=30,
     )
     amount_type = CharField(
-        choices=[(type, type) for type in AMOUNT_TYPES],
+        choices=[(_type, _type) for _type in AMOUNT_TYPES],
         max_length=30,
     )
     product_type = CharField(
-        choices=[(type, type) for type in PRODUCT_TYPES],
+        choices=[(_type, _type) for _type in PRODUCT_TYPES],
         max_length=30,
     )
     # Either a number from 0 to 1 representing a percent, or a fixed value for discount
