@@ -2,6 +2,7 @@
 import _ from 'lodash';
 import moment from 'moment';
 import R from 'ramda';
+import PhoneNumber from 'awesome-phonenumber';
 
 import type {
   Profile,
@@ -71,13 +72,20 @@ const personalMessages: ErrorMessages = {
   'birth_country': "Country is required",
   'nationality': "Nationality is required",
   'date_of_birth': 'Please enter a valid date of birth',
-  'phone_number': 'Please enter a phone number'
+  'phone_number': 'Please enter a valid phone number'
 };
 
 export const personalValidation = (profile: Profile) => {
   let errors = findErrors(profile, R.keys(personalMessages), personalMessages);
-  if (!moment(profile.date_of_birth).isBefore(moment(), 'day')) {
+  if ( !moment(profile.date_of_birth).isBefore(moment(), 'day') ) {
     errors.date_of_birth = personalMessages.date_of_birth;
+  }
+
+  if ( profile.phone_number ) {
+    let number = new PhoneNumber(profile.phone_number);
+    if ( ! number.isValid() ) {
+      errors.phone_number = personalMessages.phone_number;
+    }
   }
   return errors;
 };
